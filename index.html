@@ -757,7 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         'zato-scorpius': {
             name: "JNK-OW-MS06V Zato Scorpius",
-            description: "The JNK-OW-MS06V Zato Scorpius is a heavily modified Zato variant, transformed into a formidable long-range artillery platform. Optimized for steady, devastating fire, this Mobile Suit sheds some of its predecessor's agility for raw destructive power. Its primary armament is a powerful, long-range Railgun capable of precision strikes that ignore half cover, complemented by a devastating Flamethrower for wide-area heat damage and a reliable Salvaged Rifle for general engagements. Clad in Desert-Camouflage Plating, the Zato Scorpius is engineered to endure harsh environments, boasting fire immunity and equipped with Heat Sink Vents that grant it advantage against heat damage and exhaustion. Its \"Cannoneer\" ability allows it to unleash its main cannon twice per turn, overwhelming opponents with sustained firepower. For defense, it features a Smoke Discharger, providing a crucial escape mechanism. While its \"Heavy Frame\" offers an extra upgrade slot, this unit is a \"Grounded Unit,\" designed exclusively for terrestrial operations, utilizing Tremorsense to detect threats unseen.",
+            description: "The JNK-OW-MS06V Zato Scorpius is a heavily modified Zato variant, transformed into a formidable long-range artillery platform. Optimized for steady, devastating fire, this Mobile Suit sheds some of its predecessor's agility for raw destructive power. Its primary armament is a powerful, long-range Railgun capable of precision strikes that ignore half cover, complemented by a devastating Flamethrower for wide-area heat damage and a reliable Salvaged Rifle for general engagements. Clad in Desert-Camouflage Plating, the Zato Scorpius is engineered to endure harsh environments, boasting fire immunity and equipped with Heat Sink Vents that grant it advantage against heat damage and exhaustion. Its \"Cannoneer\" ability allows it to unleash its main cannon twice per turn, overwhelming opponents with sustained firepower. For defense, it features a Smoke Discharger, providing a crucial escape mechanism. While its \"Heavy Frame\" offers an invaluable extra upgrade slot, this unit is a \"Grounded Unit,\" designed exclusively for terrestrial operations, utilizing Tremorsense to detect threats unseen.",
             img: "https://media.discordapp.net/attachments/1377889267057168414/1378785645031329934/Zaku_Tank_II.png?ex=683dddb2&is=683c8c32&hm=3fee821fc156c6ddbdd00208e8addb962fd90c08fc5d8cfdaa0b620fcb2fe286&=&format=webp&quality=lossless&width=880&height=880",
             stats: { STR: 12, DEX: 18, CON: 16 },
             ac: 16, acDescription: "Desert-Camouflage Plating", hp: 125, hpFormula: "40 Overguard", speed: "5sq.",
@@ -886,7 +886,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const defaultPlayerCharacters = {
         'silas': {
-            name: "Silas 'Ghost' Vance",
+            name: "Silas 'Anvil' Vance",
             class: "Ace Pilot",
             level: 5,
             hp: 45,
@@ -897,11 +897,11 @@ document.addEventListener('DOMContentLoaded', () => {
             abilities: ["Quick Reflexes", "Expert Maneuvers"]
         },
         'dina': {
-            name: "Dina 'Wrench' Khan",
+            name: "Dina 'Wrench' Eisenfaust",
             class: "Mechanic",
             level: 4,
             hp: 38,
-            img: "https://placehold.co/200x200/2196F3/FFFFFF?text=Dina",
+            img: "https://cdn.discordapp.com/attachments/440227326236819466/1378855761840439336/Pilot_Dina.jpg?ex=683e1eff&is=683ccd7f&hm=4f3f8ec310c623df3a2cb6eec39f67ed46bae6aa4766a7edb83184031bb70561&",
             equippedMobileSuitId: null,
             stats: { STR: 10, DEX: 12, CON: 16, INT: 18, WIS: 12, CHA: 10 },
             equipment: ["Toolkit (Masterwork)", "Welding Torch", "Datapad", "Utility Belt"],
@@ -923,7 +923,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let campaignData = { mobileSuits: {}, playerCharacters: {} };
     let currentMsSortOrder = 'name-asc';
     let currentPcSortOrder = 'name-asc';
-    let isSpoilerEnabled = true; // Default to spoilers ON
+    // Initialize isSpoilerEnabled: true by default, or load from localStorage
+    let isSpoilerEnabled = localStorage.getItem('spoilerEnabled') !== 'false'; // Default to true
 
     // --- DOM Elements ---
     const navLinks = document.querySelectorAll('.nav-link');
@@ -1091,18 +1092,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         // Remove any saved MS that are no longer in defaults (optional, but good for cleanup)
-        for (const key in savedMs) {
-            if (!defaultMs[key]) {
-                // delete savedMs[key]; // Uncomment if you want to remove old custom entries
-            }
-        }
+        // for (const key in savedMs) {
+        //     if (!defaultMs[key]) {
+        //         delete savedMs[key];
+        //     }
+        // }
         return savedMs;
     }
 
     // Initial data load
     campaignData.mobileSuits = loadDataFromLocalStorage('mobileSuitsDatabase', defaultMobileSuits, mergeMobileSuits);
     campaignData.playerCharacters = loadDataFromLocalStorage('playerCharactersDatabase', defaultPlayerCharacters);
-    isSpoilerEnabled = localStorage.getItem('spoilerEnabled') === 'true'; // Default to true if not set
+    // isSpoilerEnabled is already initialized based on localStorage or default true
 
     // --- Modal Functions ---
     function showConfirmModal(message, onConfirmCallback) {
@@ -1216,7 +1217,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h3 style="font-size: 1.875rem; font-weight: bold; color: #ea580c; margin-bottom: 0.5rem;">${wrapWithSpoiler(ms.name, isTheosUnit)}</h3>
                 <p style="color: #475569; font-size: 0.875rem; margin-bottom: 1rem;"><em>Gargantuan Construct (Mobile Suit)</em></p>
                 
-                <img src="${ms.img}" alt="${ms.name}" class="w-full h-48 object-cover rounded-lg mb-4 shadow-md ${imageClass}" onerror="this.onerror=null;this.src='https://placehold.co/600x200/cccccc/000000?text=Image+Not+Found';">
+                <img src="${ms.img}" alt="${ms.name}" class="w-full h-48 object-cover rounded-lg mb-4 shadow-md ${imageClass}" onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/000000?text=Image+Not+Found';">
                 
                 <p style="color: #475569; font-size: 0.95rem; margin-bottom: 1rem;">${wrapWithSpoiler(ms.description, isTheosUnit)}</p>
 
@@ -1805,7 +1806,9 @@ document.addEventListener('DOMContentLoaded', () => {
             msDetailsView.classList.add('hidden'); // Hide details view
             currentMsId = null; // Reset current MS ID
             updateSpoilerStatusDisplay(); // Update spoiler status display
-            applyDarkMode(false); // Reset to light mode
+            // Re-apply dark mode based on cleared preference (which will default to light)
+            const isCurrentlyDark = localStorage.getItem('darkMode') === 'true';
+            applyDarkMode(isCurrentlyDark);
         });
     });
 
