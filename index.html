@@ -1,0 +1,2200 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Suit Database</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Base styles - will be overridden by dark: classes */
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; } /* Prevent horizontal scroll */
+        .nav-link.active { background-color: #ea580c; color: white; }
+        .nav-link:not(.active):hover { background-color: #475569; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .stat-block {
+            background-color: #fdf6e3;
+            border: 2px solid #ca8a04;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            color: #44403c;
+        }
+        .stat-block h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-bottom: 2px solid #ca8a04;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .stat-block p { margin-bottom: 0.5rem; }
+        .stat-block strong { color: #78350f; }
+        /* Loading spinner for AI generation */
+        .loading-spinner {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #ea580c; /* Orange */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Modal Styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        /* Chart container for responsiveness */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Max width for the chart */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Fixed height for the chart */
+            max-height: 400px; /* Max height for the chart */
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px; /* Slightly taller on larger screens */
+            }
+        }
+        /* Style for stat input fields */
+        .stat-input {
+            width: 4rem; /* Fixed width for consistency */
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 0.25rem;
+            padding: 0.25rem;
+            margin-left: 0.5rem;
+        }
+
+        /* Dark mode specific styles */
+        html.dark {
+            background-color: #1a202c; /* Dark background for the whole page */
+            color: #e2e8f0; /* Light text color */
+        }
+
+        html.dark .bg-slate-100 {
+            background-color: #1a202c;
+        }
+        html.dark .text-slate-800 {
+            color: #e2e8f0;
+        }
+        html.dark .text-slate-900 {
+            color: #f8fafc;
+        }
+        html.dark .bg-white {
+            background-color: #2d3748;
+        }
+        html.dark .shadow-md {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+        }
+        html.dark .shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.25);
+        }
+        html.dark .stat-block {
+            background-color: #3b3b3b;
+            border-color: #d69e2e;
+            color: #e2e8f0;
+        }
+        html.dark .stat-block h3 {
+            border-color: #d69e2e;
+        }
+        html.dark .stat-block strong {
+            color: #f6ad55;
+        }
+        html.dark .text-slate-600 {
+            color: #cbd5e0;
+        }
+        html.dark .text-slate-500 {
+            color: #a0aec0;
+        }
+        html.dark .text-slate-700 {
+            color: #e2e8f0;
+        }
+        html.dark .border-slate-300 {
+            border-color: #4a5568;
+        }
+        html.dark .bg-slate-50 {
+            background-color: #4a5568;
+        }
+        html.dark .border-slate-200 {
+            border-color: #4a5568;
+        }
+        html.dark .bg-blue-100 {
+            background-color: #2a4365;
+        }
+        html.dark .border-blue-500 {
+            border-color: #63b3ed;
+        }
+        html.dark .text-blue-700 {
+            color: #90cdf4;
+        }
+        html.dark .bg-slate-800 {
+            background-color: #1a202c;
+        }
+        html.dark .border-slate-600 {
+            border-color: #4a5568;
+        }
+        html.dark .modal-content {
+            background-color: #2d3748;
+            color: #e2e8f0;
+        }
+        html.dark .modal-content h3 {
+            color: #f8fafc;
+        }
+        html.dark .modal-content p {
+            color: #cbd5e0;
+        }
+
+        /* Spoiler Protection Styles for Text */
+        .spoiler-blur {
+            filter: blur(4px);
+            cursor: pointer;
+            transition: filter 0.3s ease-in-out;
+            color: transparent; /* Hide text color */
+            background-color: #333; /* Redacted block */
+            border-radius: 4px;
+            padding: 0 4px; /* Give it some padding */
+            display: inline-block; /* Necessary for background-color and padding */
+            user-select: none; /* Prevent text selection from revealing */
+        }
+        .spoiler-blur.spoiler-revealed {
+            filter: blur(0);
+            cursor: default;
+            color: inherit; /* Reveal text color */
+            background-color: transparent; /* Remove redacted block */
+            user-select: text; /* Allow text selection once revealed */
+        }
+
+        /* Spoiler Protection Styles for Images */
+        .image-spoiler-blur {
+            filter: blur(8px); /* Stronger blur for images */
+            cursor: pointer;
+            transition: filter 0.3s ease-in-out;
+            user-select: none;
+        }
+        .image-spoiler-blur.image-spoiler-revealed {
+            filter: blur(0);
+            cursor: default;
+        }
+
+        /* Theos Card Indicator */
+        .theos-card-indicator {
+            border: 2px solid #ef4444; /* Red border for Theos units */
+            position: relative;
+        }
+        .theos-card-indicator::before {
+            content: "SPOILER";
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            background-color: #ef4444;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        /* Mobile Navigation Specific Styles */
+        /* Hide menu button by default, show on small screens */
+        #menu-toggle-btn {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1100; /* Above nav and overlay */
+        }
+
+        /* Overlay to dim content when nav is open */
+        #nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 900; /* Below nav, above main content */
+            display: none; /* Hidden by default */
+            transition: opacity 0.3s ease-in-out;
+            opacity: 0;
+        }
+        #nav-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Mobile-first navigation styling */
+        .mobile-nav-closed {
+            transform: translateX(-100%);
+        }
+        .mobile-nav-open {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 767px) { /* Styles for screens smaller than md (768px) */
+            body {
+                padding-left: 0; /* Remove padding from main for mobile */
+            }
+            nav {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 256px; /* Fixed width for mobile sidebar */
+                height: 100%;
+                z-index: 1000;
+                transition: transform 0.3s ease-in-out;
+                box-shadow: 2px 0 5px rgba(0,0,0,0.5);
+            }
+            #menu-toggle-btn {
+                display: block; /* Show hamburger button on mobile */
+            }
+            main {
+                margin-left: 0; /* No margin on main content when nav is closed */
+            }
+        }
+
+        @media (min-width: 768px) { /* Styles for screens md (768px) and larger */
+            nav {
+                position: static; /* Revert to static position */
+                transform: translateX(0) !important; /* Ensure nav is always visible */
+                width: 256px; /* Keep fixed width for desktop */
+            }
+            #menu-toggle-btn {
+                display: none; /* Hide hamburger button on desktop */
+            }
+            #nav-overlay {
+                display: none !important; /* Ensure overlay is hidden on desktop */
+            }
+        }
+    </style>
+</head>
+<body class="h-full flex antialiased text-slate-800 bg-slate-100">
+
+    <button id="menu-toggle-btn" class="p-3 bg-orange-600 text-white rounded-full shadow-lg z-50">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
+
+    <div id="nav-overlay" class="hidden"></div>
+
+    <nav id="main-nav" class="w-64 bg-slate-800 text-white flex-shrink-0 p-4 flex flex-col space-y-2 mobile-nav-closed md:mobile-nav-open">
+        <h1 class="text-2xl font-bold text-orange-500 border-b border-slate-600 pb-2 mb-4">Site Navigation</h1>
+        <a href="#" class="nav-link text-lg font-semibold p-3 rounded-lg transition-colors duration-200 active" data-target="ms-database">Mobile Suit Database</a>
+        <a href="#" class="nav-link text-lg font-semibold p-3 rounded-lg transition-colors duration-200" data-target="player-characters">Player Characters</a>
+        <a href="#" class="nav-link text-lg font-semibold p-3 rounded-lg transition-colors duration-200" data-target="gundam-classes">Gundam 5e Classes</a>
+        <a href="#" class="nav-link text-lg font-semibold p-3 rounded-lg transition-colors duration-200" data-target="plot-synopsis">Plot Synopsis</a>
+        <a href="#" class="nav-link text-lg font-semibold p-3 rounded-lg transition-colors duration-200" data-target="dm-tools">DM Tools ✨</a>
+        
+        <div class="mt-auto pt-4 border-t border-slate-600">
+            <button id="dark-mode-toggle" class="w-full p-3 rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors duration-200 text-white flex items-center justify-center space-x-2">
+                <span id="dark-mode-icon">💡</span>
+                <span id="dark-mode-text">Light Mode</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="flex-1 p-6 md:p-10 overflow-y-auto">
+        
+        <section id="ms-database" class="content-section active">
+            <h2 class="text-4xl font-bold text-slate-900 mb-6">Mobile Suit Database</h2>
+
+            <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6 p-4 bg-white rounded-lg shadow-md">
+                <div class="flex items-center space-x-2">
+                    <label for="sort-by" class="font-medium text-slate-700">Sort By:</label>
+                    <select id="sort-by" class="p-2 border border-slate-300 rounded-md">
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="faction">Faction</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="ms-grid">
+                </div>
+
+            <div id="ms-details-view" class="mt-10 hidden">
+                <div class="bg-white p-6 rounded-xl shadow-lg grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <img id="ms-image" src="" alt="" class="w-full h-64 object-cover rounded-lg mb-4 shadow-md">
+                        <h3 id="ms-name" class="text-3xl font-bold text-slate-900"></h3>
+                        <p id="ms-description" class="mt-2 text-slate-600 text-lg"></p>
+                        <div class="mt-6">
+                            <h4 class="text-xl font-semibold text-orange-700 mb-3">Core Attributes</h4>
+                            <div class="chart-container relative w-full h-80 max-w-lg mx-auto">
+                                <canvas id="ms-stats-chart"></canvas>
+                            </div>
+                            <div id="ms-editable-stats" class="mt-6 p-4 bg-slate-50 rounded-md border border-slate-200">
+                                </div>
+                            <button id="export-ms-html-btn" class="mt-6 px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center">
+                                Export HTML
+                            </button>
+                        </div>
+                    </div>
+                    <div id="ms-stat-block-container" class="stat-block">
+                        </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="player-characters" class="content-section">
+            <h2 class="text-4xl font-bold text-slate-900 mb-6">Player Characters</h2>
+            <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6 rounded-r-lg" role="alert">
+                <p class="font-bold">Local Storage Notice</p>
+                <p>Player character data (add, edit, delete) is saved directly in your **browser's local storage**. This means it will persist when you close and reopen this page in the same browser, but it is **not saved to the HTML file itself** on your computer.</p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6 p-4 bg-white rounded-lg shadow-md">
+                <div class="flex items-center space-x-2">
+                    <label for="sort-by-pc" class="font-medium text-slate-700">Sort By:</label>
+                    <select id="sort-by-pc" class="p-2 border border-slate-300 rounded-md">
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="class">Class</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" id="pc-grid">
+                </div>
+
+            <article class="bg-white p-6 rounded-xl shadow-lg">
+                <h3 class="text-2xl font-semibold text-orange-700 mb-3">Add New Player Character</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="new-pc-name" class="block text-sm font-medium text-slate-700">Character Name</label>
+                        <input type="text" id="new-pc-name" class="mt-1 block w-full p-2 border border-slate-300 rounded-md">
+                    </div>
+                    <div>
+                        <label for="new-pc-class" class="block text-sm font-medium text-slate-700">Class</label>
+                        <input type="text" id="new-pc-class" class="mt-1 block w-full p-2 border border-slate-300 rounded-md">
+                    </div>
+                    <div>
+                        <label for="new-pc-level" class="block text-sm font-medium text-slate-700">Level</label>
+                        <input type="number" id="new-pc-level" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="1" min="1">
+                    </div>
+                    <div>
+                        <label for="new-pc-hp" class="block text-sm font-medium text-slate-700">HP</label>
+                        <input type="number" id="new-pc-hp" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="10">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="new-pc-img" class="block text-sm font-medium text-slate-700">Character Image URL (Optional)</label>
+                        <input type="text" id="new-pc-img" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" placeholder="e.g., https://placehold.co/200x200?text=Pilot">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="new-pc-equipped-ms" class="block text-sm font-medium text-slate-700">Equipped Mobile Suit (Optional)</label>
+                        <select id="new-pc-equipped-ms" class="mt-1 block w-full p-2 border border-slate-300 rounded-md">
+                            <option value="">-- Select Mobile Suit --</option>
+                            </select>
+                    </div>
+                    <div class="md:col-span-2 grid grid-cols-3 gap-2 mt-4">
+                        <h4 class="col-span-3 text-xl font-semibold text-orange-700 mb-2">Base Stats</h4>
+                        <div>
+                            <label for="new-pc-str" class="block text-sm font-medium text-slate-700">STR</label>
+                            <input type="number" id="new-pc-str" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="10" min="1" max="30">
+                        </div>
+                        <div>
+                            <label for="new-pc-dex" class="block text-sm font-medium text-slate-700">DEX</label>
+                            <input type="number" id="new-pc-dex" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="10" min="1" max="30">
+                        </div>
+                        <div>
+                            <label for="new-pc-con" class="block text-sm font-medium text-slate-700">CON</label>
+                            <input type="number" id="new-pc-con" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="10" min="1" max="30">
+                        </div>
+                        <div>
+                            <label for="new-pc-int" class="block text-sm font-medium text-slate-700">INT</label>
+                            <input type="number" id="new-pc-int" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="10" min="1" max="30">
+                        </div>
+                        <div>
+                            <label for="new-pc-wis" class="block text-sm font-medium text-slate-700">WIS</label>
+                            <input type="number" id="new-pc-wis" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="10" min="1" max="30">
+                        </div>
+                        <div>
+                            <label for="new-pc-cha" class="block text-sm font-medium text-slate-700">CHA</label>
+                            <input type="number" id="new-pc-cha" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="10" min="1" max="30">
+                        </div>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="new-pc-equipment" class="block text-sm font-medium text-slate-700">Equipment (one item per line)</label>
+                        <textarea id="new-pc-equipment" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" rows="3"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="new-pc-abilities" class="block text-sm font-medium text-slate-700">Special Abilities (one ability per line)</label>
+                        <textarea id="new-pc-abilities" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" rows="3"></textarea>
+                    </div>
+                </div>
+                <button id="add-pc-btn" class="mt-6 px-6 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors duration-200 flex items-center justify-center">
+                    Add Player Character
+                    <div id="add-pc-loading" class="loading-spinner ml-3 hidden"></div>
+                </button>
+                <div id="add-pc-feedback" class="mt-4 p-3 rounded-md text-sm hidden"></div>
+            </article>
+        </section>
+
+        <section id="gundam-classes" class="content-section">
+            <h2 class="text-4xl font-bold text-slate-900 mb-6">Gundam 5e Classes</h2>
+            <div class="prose max-w-none text-slate-600 text-lg leading-relaxed">
+                <p>In the world of *The Cycle Rekindled*, your character's class represents their specialized training and role within their scavenger guild or their unique talents in piloting Mobile Suits. These classes are designed to integrate seamlessly with the core D&D 5e rules, offering distinct abilities that enhance both on-foot and Mobile Suit combat.</p>
+
+                <h3 class="text-2xl font-bold text-orange-700 mt-6 mb-3">The Ace Pilot</h3>
+                <p>A master of Mobile Suit combat, capable of daring maneuvers and pinpoint accuracy. Aces are the spearhead of any assault, turning their Mobile Suit into an extension of their will.</p>
+                <ul class="list-disc list-inside ml-4 mb-4">
+                    <li>**Primary Ability:** Dexterity (for piloting finesse and ranged attacks).</li>
+                    <li>**Key Features:** Enhanced Mobile Suit movement, bonus to hit with Mobile Suit weapons, special evasive actions.</li>
+                    <li>**Example Ability (Level 3):** **Quick Reflexes.** When piloting a Mobile Suit, you can use your reaction to impose disadvantage on one attack roll made against your Mobile Suit.</li>
+                </ul>
+
+                <h3 class="text-2xl font-bold text-orange-700 mt-6 mb-3">The Mechanic</h3>
+                <p>The lifeblood of any guild, a Mechanic keeps the Mobile Suits running, patching damage, and improvising solutions in the heat of battle. They understand the intricate workings of the iron beasts better than anyone.</p>
+                <ul class="list-disc list-inside ml-4 mb-4">
+                    <li>**Primary Ability:** Intelligence (for repairs and understanding tech).</li>
+                    <li>**Key Features:** Faster Mobile Suit repair, ability to jury-rig temporary upgrades, proficiency with advanced tools.</li>
+                    <li>**Example Ability (Level 3):** **Field Repair.** As an action, you can touch a damaged Mobile Suit and expend one use of your Tinker's Tools to restore 2d8 + your Intelligence modifier hit points to it. You can use this ability a number of times equal to your proficiency bonus per long rest.</li>
+                </ul>
+
+                <h3 class="text-2xl font-bold text-orange-700 mt-6 mb-3">The Strategist</h3>
+                <p>A commander and tactician, the Strategist excels at coordinating allies and exploiting enemy weaknesses. They might not be the best pilot, but their presence elevates the entire squad.</p>
+                <ul class="list-disc list-inside ml-4 mb-4">
+                    <li>**Primary Ability:** Wisdom or Charisma (for battlefield awareness and leadership).</li>
+                    <li>**Key Features:** Granting bonus actions/reactions to allies, identifying weak points on enemy Mobile Suits, tactical repositioning.</li>
+                    <li>**Example Ability (Level 3):** **Tactical Readout.** As a bonus action, you can choose one enemy Mobile Suit you can see within 60 feet. Until the start of your next turn, attack rolls made by your allies against that Mobile Suit have advantage. You can use this ability a number of times equal to your proficiency bonus per long rest.</li>
+                </ul>
+
+                <h3 class="text-2xl font-bold text-orange-700 mt-6 mb-3">The Scavenger</h3>
+                <p>Resourceful and resilient, the Scavenger is adept at finding valuable salvage in the most dangerous places and making the most out of limited supplies. They are the backbone of the guild's economy.</p>
+                <ul class="list-disc list-inside ml-4 mb-4">
+                    <li>**Primary Ability:** Wisdom (for perception and survival) or Strength (for carrying heavy salvage).</li>
+                    <li>**Key Features:** Enhanced scavenging rolls, ability to find rare components, resistance to environmental hazards.</li>
+                    <li>**Example Ability (Level 3):** **Resourceful Find.** When you make a successful Intelligence (Investigation) or Wisdom (Perception) check to find salvage, you can choose to find one additional common component, or roll an extra die for a rare component.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="plot-synopsis" class="content-section">
+            <h2 class="text-4xl font-bold text-slate-900 mb-6">Campaign Plot Synopsis</h2>
+            <div class="prose max-w-none text-slate-600 text-lg leading-relaxed" id="plot-synopsis-content">
+                <p>In a world perpetually scarred by conflict, where towering Mobile Suits are the only means of survival, humanity clings to existence within nomadic scavenger guilds. The constant struggle for resources is fueled by mysterious "Sky Drops" – technological marvels that fall from the heavens, providing vital salvage for their war machines.</p>
+                <p>The campaign begins as the player characters, pilots of their own cobbled-together Mobile Suits, navigate this harsh reality. They embark on perilous journeys, seeking valuable salvage from the Sky Drops and engaging in fierce battles against rival guilds and automated defense systems. As they grow in power and influence, they uncover ancient secrets hinting at the true origin of the Sky Drops and the cataclysm that reshaped their world.</p>
+                <p>Their choices will determine the fate of their guild and potentially lead to the rediscovery of lost technologies that could either bring an end to the ceaseless conflict or plunge humanity into an even greater struggle for dominance. The future of their fractured world rests on their shoulders.</p>
+            </div>
+        </section>
+
+        <section id="dm-tools" class="content-section">
+            <h2 class="text-4xl font-bold text-slate-900 mb-6">DM Tools ✨</h2>
+            <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6 rounded-r-lg" role="alert">
+                <p class="font-bold">Local Storage Notice</p>
+                <p>Changes made to Mobile Suits (add, edit, delete) and Player Characters are saved directly in your **browser's local storage**. This means they will persist when you close and reopen this page in the same browser, but they are **not saved to the HTML file itself** on your computer.</p>
+            </div>
+            <div class="space-y-8">
+                <article class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-semibold text-orange-700 mb-3">Settings & Data Management</h3>
+                    <div class="flex flex-col space-y-4">
+                        <button id="toggle-spoiler-btn" class="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200 flex items-center justify-center">
+                            Toggle Spoiler Tags: <span id="spoiler-status" class="ml-2 font-bold">ON</span>
+                        </button>
+                        <button id="clear-data-btn" class="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200 flex items-center justify-center">
+                            Clear All Local Data
+                        </button>
+                    </div>
+                </article>
+
+                <article class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-semibold text-orange-700 mb-3">5e Character Stat Roller 🎲</h3>
+                    <p class="text-slate-600 mb-4">Generates 6 ability scores using the 4d6 drop the lowest method.</p>
+                    <button id="roll-5e-stats-btn" class="px-6 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors duration-200 flex items-center justify-center">
+                        Roll Stats
+                    </button>
+                    <div id="5e-stats-results" class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-md text-slate-700 min-h-[50px]">
+                        <p>Your generated stats will appear here.</p>
+                    </div>
+                </article>
+
+                <article class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-semibold text-orange-700 mb-3">Mobile Suit Name Generator</h3>
+                    <p class="text-slate-600 mb-4">Enter a style or theme (e.g., "junker style", "sleek and fast", "heavy artillery") to generate new Mobile Suit names.</p>
+                    <textarea id="ms-name-prompt" class="w-full p-3 border border-slate-300 rounded-md focus:ring-orange-500 focus:border-orange-500 mb-4" rows="3" placeholder="e.g., 'stealth recon unit', 'brutal melee mech'"></textarea>
+                    <button id="generate-ms-name-btn" class="px-6 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors duration-200 flex items-center justify-center">
+                        Generate Name ✨
+                        <div id="ms-name-loading" class="loading-spinner ml-3 hidden"></div>
+                    </button>
+                    <div id="ms-name-results" class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-md text-slate-700 min-h-[50px]"></div>
+                </article>
+
+                <article class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-semibold text-orange-700 mb-3">Model Number Generator</h3>
+                    <p class="text-slate-600 mb-4">Select a faction to generate a thematic model number.</p>
+                    <div class="flex items-center space-x-4 mb-4">
+                        <label for="model-faction-select" class="font-medium text-slate-700">Faction:</label>
+                        <select id="model-faction-select" class="p-2 border border-slate-300 rounded-md flex-grow">
+                            <option value="theos">Theos</option>
+                            <option value="junker-guilds">Junker Guilds</option>
+                            </select>
+                    </div>
+                    <button id="generate-model-num-btn" class="px-6 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors duration-200 flex items-center justify-center">
+                        Generate Model Number
+                        <div id="model-num-loading" class="loading-spinner ml-3 hidden"></div>
+                    </button>
+                    <div id="model-num-results" class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-md text-slate-700 min-h-[50px]"></div>
+                </article>
+
+                <article class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-semibold text-orange-700 mb-3">Dice Roller 🎲</h3>
+                    <p class="text-slate-600 mb-4">Roll any number of dice (e.g., 2d6, 1d20).</p>
+                    <div class="flex items-center space-x-4 mb-4">
+                        <input type="number" id="num-dice-input" class="w-20 p-2 border border-slate-300 rounded-md text-center" value="1" min="1">
+                        <span class="font-bold text-slate-700">d</span>
+                        <input type="number" id="die-type-input" class="w-20 p-2 border border-slate-300 rounded-md text-center" value="20" min="2">
+                        <button id="roll-dice-btn" class="px-6 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors duration-200 flex items-center justify-center">
+                            Roll Dice
+                        </button>
+                    </div>
+                    <div id="dice-roll-results" class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-md text-slate-700 min-h-[50px]">
+                        <p>Results will appear here.</p>
+                    </div>
+                </article>
+
+                <article class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-semibold text-orange-700 mb-3">Loot Table Generator 💰</h3>
+                    <p class="text-slate-600 mb-4">Define your loot table with items and their relative weights (e.g., "Common Scrap: 50", "Rare Component: 10", "Legendary Core: 1"). Each item on a new line.</p>
+                    <textarea id="loot-table-input" class="w-full p-3 border border-slate-300 rounded-md focus:ring-orange-500 focus:border-orange-500 mb-4" rows="5" placeholder="Common Scrap: 50
+Rare Component: 10
+Legendary Core: 1"></textarea>
+                    <button id="generate-loot-btn" class="px-6 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors duration-200 flex items-center justify-center">
+                        Generate Loot
+                        <div id="loot-loading" class="loading-spinner ml-3 hidden"></div>
+                    </button>
+                    <div id="loot-results" class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-md text-slate-700 min-h-[50px]">
+                        <p>Generated loot will appear here.</p>
+                    </div>
+                </article>
+
+                <article class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-semibold text-orange-700 mb-3">Add Custom Mobile Suit</h3>
+                    <p class="text-slate-600 mb-4">Define a new Mobile Suit's properties to add it to your database.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="new-ms-name" class="block text-sm font-medium text-slate-700">Name</label>
+                            <input type="text" id="new-ms-name" class="mt-1 block w-full p-2 border border-slate-300 rounded-md">
+                        </div>
+                        <div>
+                            <label for="new-ms-img" class="block text-sm font-medium text-slate-700">Image URL</label>
+                            <input type="text" id="new-ms-img" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" placeholder="e.g., https://placehold.co/600x400?text=My+Custom+Mech">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="new-ms-description" class="block text-sm font-medium text-slate-700">Description</label>
+                            <textarea id="new-ms-description" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" rows="3"></textarea>
+                        </div>
+                        <div>
+                            <label for="new-ms-ac" class="block text-sm font-medium text-slate-700">AC</label>
+                            <input type="number" id="new-ms-ac" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="10">
+                        </div>
+                        <div>
+                            <label for="new-ms-ac-desc" class="block text-sm font-medium text-slate-700">AC Description</label>
+                            <input type="text" id="new-ms-ac-desc" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="Plating">
+                        </div>
+                        <div>
+                            <label for="new-ms-hp" class="block text-sm font-medium text-slate-700">HP</label>
+                            <input type="number" id="new-ms-hp" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="100">
+                        </div>
+                        <div>
+                            <label for="new-ms-hp-formula" class="block text-sm font-medium text-slate-700">HP Formula</label>
+                            <input type="text" id="new-ms-hp-formula" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="10d10 + 20">
+                        </div>
+                        <div>
+                            <label for="new-ms-speed" class="block text-sm font-medium text-slate-700">Speed</label>
+                            <input type="text" id="new-ms-speed" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="30 ft.">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="new-ms-immunities" class="block text-sm font-medium text-slate-700">Damage Immunities (comma-separated)</label>
+                            <input type="text" id="new-ms-immunities" class="mt-1 block w-full p-2 border border-slate-300 rounded-md">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="new-ms-condition-immunities" class="block text-sm font-medium text-slate-700">Condition Immunities (comma-separated)</label>
+                            <input type="text" id="new-ms-condition-immunities" class="mt-1 block w-full p-2 border border-slate-300 rounded-md">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="new-ms-senses" class="block text-sm font-medium text-slate-700">Senses</label>
+                            <input type="text" id="new-ms-senses" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="passive Perception 10">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="new-ms-languages" class="block text-sm font-medium text-slate-700">Languages</label>
+                            <input type="text" id="new-ms-languages" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="understands pilot knows">
+                        </div>
+                        
+                        <div class="md:col-span-2 grid grid-cols-3 gap-2 mt-4">
+                            <h4 class="col-span-3 text-xl font-semibold text-orange-700 mb-2">Base Stats</h4>
+                            <div>
+                                <label for="new-ms-str" class="block text-sm font-medium text-slate-700">STR</label>
+                                <input type="number" id="new-ms-str" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="10" min="1" max="30">
+                            </div>
+                            <div>
+                                <label for="new-ms-dex" class="block text-sm font-medium text-slate-700">DEX</label>
+                                <input type="number" id="new-ms-dex" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="10" min="1" max="30">
+                            </div>
+                            <div>
+                                <label for="new-ms-con" class="block text-sm font-medium text-slate-700">CON</label>
+                                <input type="number" id="new-ms-con" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" value="10" min="1" max="30">
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2 mt-4">
+                            <label for="new-ms-actions" class="block text-sm font-medium text-slate-700">Actions (Format: "Name: Description" per line)</label>
+                            <textarea id="new-ms-actions" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" rows="5" placeholder="e.g., 'Beam Rifle: +5 to hit, range 300/900 ft. Hit: 22 (4d10) force damage.'"></textarea>
+                        </div>
+                        <div class="md:col-span-2 mt-4">
+                            <label for="new-ms-special-abilities" class="block text-sm font-medium text-slate-700">Special Abilities (Format: "Name: Description" per line)</label>
+                            <textarea id="new-ms-special-abilities" class="mt-1 block w-full p-2 border border-slate-300 rounded-md" rows="5" placeholder="e.g., 'Flight: Can fly up to 60 ft. per turn.'"></textarea>
+                        </div>
+                    </div>
+                    
+                    <button id="add-ms-btn" class="mt-6 px-6 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors duration-200 flex items-center justify-center">
+                        Add Mobile Suit
+                        <div id="add-ms-loading" class="loading-spinner ml-3 hidden"></div>
+                    </button>
+                    <div id="add-ms-feedback" class="mt-4 p-3 rounded-md text-sm hidden"></div>
+                </article>
+
+                <article class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-semibold text-orange-700 mb-3">Submit Ideas!</h3>
+                    <p class="text-slate-600 mb-4">Have an idea for a new Mobile Suit, character class, or campaign feature? Send it to us!</p>
+                    <p class="text-slate-700 font-bold">Email: <a href="mailto:gundam5e.ideas@example.com" class="text-blue-600 hover:underline">gundam5e.ideas@example.com</a></p>
+                </article>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="confirmation-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold text-slate-900 mb-4">Confirm Deletion</h3>
+            <p id="modal-message" class="text-lg text-slate-600 mb-6">Are you sure you want to delete this Mobile Suit?</p>
+            <div class="flex justify-center space-x-4">
+                <button id="modal-confirm-btn" class="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200">Delete</button>
+                <button id="modal-cancel-btn" class="px-6 py-2 bg-slate-400 text-white rounded-md hover:bg-slate-500 transition-colors duration-200">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="html-export-modal" class="modal-overlay hidden">
+        <div class="modal-content !max-w-2xl">
+            <h3 class="text-2xl font-bold text-slate-900 mb-4">Export Character Sheet HTML</h3>
+            <p class="text-slate-600 mb-4">Copy the HTML code below to paste into your documents or share.</p>
+            <textarea id="exported-html-code" class="w-full h-64 p-3 border border-slate-300 rounded-md bg-slate-50 text-slate-800 font-mono text-sm mb-4" readonly></textarea>
+            <div class="flex justify-center space-x-4">
+                <button id="copy-html-btn" class="px-6 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors duration-200">Copy Code</button>
+                <button id="close-html-modal-btn" class="px-6 py-2 bg-slate-400 text-white rounded-md hover:bg-slate-500 transition-colors duration-200">Close</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- Default Data ---
+    const defaultMobileSuits = {
+        'junker': {
+            name: "JNK-MS-01 Junkrat",
+            description: "The JNK-MS-01 Junkrat is arguably the most ubiquitous Mobile Suit seen trudging through the desolate wastes, a true emblem of desperation and the unyielding ingenuity of the scavenger guilds. Far from sleek, this bipedal mech is a crude, heavily armored hulk, meticulously cobbled together from whatever scrap and salvaged plating its builders could lay hands on. While undeniably slow, the Junkrat makes up for its lack of speed with surprising durability and brute force. Its robust Salvaged Plating gives it an impressive Armor Class, capable of shrugging off hits that would cripple lighter units. Powering through the wasteland, the Junkrat wields a heavy Mace for devastating close-quarters bludgeoning, and a Heavy Salvaged Machine Gun for ranged suppression. Its construction grants it significant resilience, providing immunities to various ailments, including poison and psychic effects. Furthermore, its Heavy Frame isn't just for show; it offers an invaluable extra upgrade slot, allowing pilots to further customize this resilient workhorse.",
+            img: "https://cdn.discordapp.com/attachments/440227326236819466/1378824729640571011/Junker.PNG?ex=683e0218&is=683cb098&hm=bffcd3dfbb39f5875329f5eaa5afe552997569c06e4c965af02c44e45e6045b9&",
+            stats: { STR: 20, DEX: 10, CON: 18 },
+            ac: 18, acDescription: "Salvaged Plating", hp: 150, hpFormula: "0 Overguard", speed: "5sq.",
+            immunities: "poison, psychic", conditionImmunities: "charmed, exhaustion, frightened, paralyzed, petrified, poisoned, unconscious",
+            senses: "passive Perception 10 (pilot's Perception)", languages: "understands languages pilot knows, but can't speak (via comms)",
+            actions: [
+                { name: "Mace", description: "3sq., 3d10 bludgeoning damage." },
+                { name: "Heavy Salvaged Machine Gun (Ranged Weapon Attack)", description: "5sq. 3d6 piercing damage." }
+            ],
+            specialAbilities: [
+                { name: "Heavy Frame", description: "This unit gains an extra upgrade slot due to it's heavy frame."}
+            ],
+            faction: "Junker Guilds"
+        },
+        'zato': {
+            name: "JNK-OW-MS06 Zato",
+            description: "The JNK-OW-MS06 Zato, a testament to the enduring ingenuity of the Old World, serves as Red-Eye's distinctive signature unit. Though its appearance might suggest a patchwork of salvaged parts, this Mobile Suit is deceptively agile, thanks to its specialized salvaged thrusters and enhanced leg joints. Designed for swift engagements and rapid withdrawals, the Zato excels in hit-and-run tactics, underscored by its remarkable mobility and evasive maneuvers. Equipped with a potent Beam Saber for close-quarters combat and a Precision Salvaged Rifle for long-range precision strikes, the Zato is a versatile combatant. Its Custom Plating provides a solid defense, complementing its inherent ability to mitigate damage. A true \"Pride of Mass Production\" unit, the Zato demonstrates a surprising adaptability, often gaining an edge in either strength or dexterity when equipped by its pilot. Furthermore, its advanced sensors include Darkvision, allowing it to operate effectively in low-light conditions, making it a formidable presence across varied battlefields.",
+            img: "https://cdn.discordapp.com/attachments/440227326236819466/1378824730177437766/zato.PNG?ex=683e0218&is=683cb098&hm=5629c6b449311b97f3c5b8d28866f652b93032f32e30a034d83085e8e4105a3f&",
+            stats: { STR: 14, DEX: 16, CON: 14 },
+            ac: 19, acDescription: "Custom Plating", hp: 100, hpFormula: "40 Overguard", speed: "7sq",
+            immunities: "poison, psychic", conditionImmunities: "charmed, exhaustion, frightened, paralyzed, petrified, poisoned, unconscious",
+            senses: "passive Perception 12 (pilot's Perception), Darkvision 120 ft.", languages: "understands languages pilot knows, but can't speak (via comms)",
+            actions: [
+                { name: "Beam Saber", description: " 1sq., 4d8 Beam Damage" },
+                { name: "Precision Salvaged Rifle (Ranged Weapon Attack)", description: "range 12sq. (long barrel). Hit: 32 (4d12 + 1d4) piercing damage." }
+            ],
+            specialAbilities: [
+                { name: "Enhanced Mobility (Bonus Action)", description: "The Zato can use its bonus action to activate its thrusters, allowing it to move an additional 5sq. this turn, or to perform a dash action. This can be done once per turn." },
+                { name: "Evasive Maneuvers", description: "When subjected to an effect that allows the Zato to make a Dexterity saving throw to take only half damage, it takes no damage if it succeeds on the saving throw, and half damage if it fails." },
+                { name: "Pride of Mass Production", description: "This unit gains an additional one point to it's modifier of Strength or Dexterity upon being equipped." }
+            ],
+            faction: "Junker Guilds"
+        },
+        'zato-scorpius': {
+            name: "JNK-OW-MS06V Zato Scorpius",
+            description: "The JNK-OW-MS06V Zato Scorpius is a heavily modified Zato variant, transformed into a formidable long-range artillery platform. Optimized for steady, devastating fire, this Mobile Suit sheds some of its predecessor's agility for raw destructive power. Its primary armament is a powerful, long-range Railgun capable of precision strikes that ignore half cover, complemented by a devastating Flamethrower for wide-area heat damage and a reliable Salvaged Rifle for general engagements. Clad in Desert-Camouflage Plating, the Zato Scorpius is engineered to endure harsh environments, boasting fire immunity and equipped with Heat Sink Vents that grant it advantage against heat damage and exhaustion. Its \"Cannoneer\" ability allows it to unleash its main cannon twice per turn, overwhelming opponents with sustained firepower. For defense, it features a Smoke Discharger, providing a crucial escape mechanism. While its \"Heavy Frame\" offers an extra upgrade slot, this unit is a \"Grounded Unit,\" designed exclusively for terrestrial operations, utilizing Tremorsense to detect threats unseen.",
+            img: "https://media.discordapp.net/attachments/1377889267057168414/1378785645031329934/Zaku_Tank_II.png?ex=683dddb2&is=683c8c32&hm=3fee821fc156c6ddbdd00208e8addb962fd90c08fc5d8cfdaa0b620fcb2fe286&=&format=webp&quality=lossless&width=880&height=880",
+            stats: { STR: 12, DEX: 18, CON: 16 },
+            ac: 16, acDescription: "Desert-Camouflage Plating", hp: 125, hpFormula: "40 Overguard", speed: "5sq.",
+            immunities: "poison, psychic, fire", conditionImmunities: "charmed, exhaustion, frightened, paralyzed, petrified, poisoned, unconscious",
+            senses: "passive Perception 13 (pilot's Perception), Tremorsense 60 ft.", languages: "understands languages pilot knows, but can't speak (via comms)",
+            actions: [
+                { name: "Railgun Shot (Main Cannon)", description: "12sq. 4d12 + 1d4 explosive damage. Ignores half cover." },
+                { name: "Flamethrower", description: "7sq. Cone. 4d12 Heat Damage, ignores accuracy checks." },
+                { name: "Salvaged Rifle", description: "7sq deals 3d10 Piercing Damage."}
+            ],
+            specialAbilities: [
+                { name: "Heat Sink Vents", description: "The Zato Scorpius has advantage on saving throws against effects that deal fire damage or impose the 'exhaustion' condition due to extreme heat." },
+                { name: "Cannoneer", description: "This unit can fire it's main cannon twice per turn. Instead of the usual once. " },
+                { name: "Smoke Discharger", description: "This unit can use a smoke discharger to dodge an attack once per combat as a free action. " },
+                { name: "Heavy Frame", description: "This unit gains an extra upgrade slot due to it's heavy frame."},
+                { name: "Grounded Unit", description: "This unit can only be used on land."}
+            ],
+            faction: "Junker Guilds"
+        },
+        'aptos': {
+            name: "THS-011𝛼 Aptos",
+            description: "The Aptos, designated THS-011𝛼, is a formidable and highly advanced Mobile Suit, believed to be a pinnacle of Theos's combat optimization. This unit boasts exceptional strength, agility, and durability, making it a versatile threat on the battlefield. Its advanced Malleable Armor Dampener allows it to adapt defensively to incoming damage, while its sheer power is evident in its ability to unleash devastating Tremor Punches that can knock opponents prone. Equipped with a unique Stutzer Unit, the Aptos can engage targets at range, restraining them with wire-guided manipulators, showcasing its tactical superiority. Designed for both direct confrontation and strategic control, the Aptos represents a significant leap in Mobile Suit technology, capable of understanding machine code and operating with a high degree of autonomy.",
+            img: "https://cdn.discordapp.com/attachments/440227326236819466/1378826351838105662/GND-THS011_-_Aptos..png?ex=683e039b&is=683cb21b&hm=84c5e4dd39894ba7252fd7a57dff7fb9dcd719e40b0a63ba31bdb75c7ffa0244&",
+            stats: { STR: 22, DEX: 16, CON: 22 },
+            ac: 18, acDescription: "Desert-Camouflage Plating", hp: 200, hpFormula: "150 Overguard", speed: "7sq.",
+            immunities: "poison, psychic, fire", conditionImmunities: "charmed, exhaustion, frightened, paralyzed, petrified, poisoned, unconscious",
+            senses: "passive Perception 13 (pilot's Perception)", languages: "understands machine code",
+            actions: [
+                { name: "Beam Saber", description: "1sq. 4d8" },
+                { name: "Tremor Punch", description: "1sq. 4d10 Bludgeoning Damage, can be used once per turn as a free action." },
+                { name: "Stutzer Unit", description: "7sq deals 3d10 Piercing Damage the defending unit must make a Dexterity saving throw or be grappled by the unit."}
+            ],
+            specialAbilities: [
+                { name: "Malleable Armor Dampener", description: "Per its Constitution score modifier, as a reaction to taking damage, it gains resistance to said damage type for 1 turn." },
+                { name: "Heavy Hitter", description: "When it strikes an opponent with a melee weapon attack or unarmed strike, the pilot targeted must make a DC 14 Strength saving throw. on a failure, their mobile suit is knocked prone. " },
+                { name: "Stutzer Unit", description: "+ 1 Hands-Free Ranged Attack (Can only be equipped once) cannot be combined with any other sub-arm system.  Equip your Mobile Suit with a binder that has a wire-guided mobile suit manipulator. This system can be used like psycommu as a focus for all-ranged talents if the hand is equipping a weapon, but does not give your mobile suit the psycommu tag. As a Standard Action, you may fire your wincher at a 30m sphere within 90m. Each target in the sphere must succeed on a DC 16 Strength Saving Throw or become Restrained. A Restrained target may attempt another Strength Saving Throw as a Standard Action to free itself. If you have no target restrained, you may reset the wincher as a Standard Action. As a bonus action, the unit may move a target under the restrained condition from this weapon 30 feet closer to this unit." }
+            ],
+            faction: "Theos"
+        },
+        'discord': {
+            name: "THS-012𝛿 Discord",
+            description: "The THS-012𝛿 Discord stands as a chilling testament to Theos's relentless pursuit of combat optimization, not through brute force, but through the insidious manipulation of reality itself. Unlike its more physically imposing counterparts, the Discord is a Mobile Suit designed to sow chaos and disruption, exploiting the very fabric of the simulated world to dismantle enemy cohesion. Its sleek, almost ethereal form often appears to shimmer or distort, a visual manifestation of its inherent ability to bend the simulation's rules. The Discord is equipped with advanced Reality Glitch Emitters that can cause devastating sensor distortions and visual anomalies for targeted Mobile Suits, turning the battlefield into a disorienting nightmare for its foes. Its primary offensive capability lies in its System Overload Beam, a weapon that bypasses traditional defenses to directly flood enemy systems with corrupted data, leading to critical debuffs in speed, accuracy, and defensive protocols. A true digital phantom, the Discord's Data Stream Manipulators allow it to launch non-physical, reality-warping attacks that can induce cascade failures across enemy networks and psychological confusion in pilots. It moves with an unsettling, almost unnatural fluidity, making it notoriously difficult to track or target. The THS-012𝛿 Discord is not merely a machine; it is a direct extension of Theos's will, a weaponized anomaly designed to prove that the most effective way to win a war is to break the world your enemies fight in.",
+            img: "https://cdn.discordapp.com/attachments/440227326236819466/1378833151136370798/GND-THS012_-_Discord.png?ex=683e09f0&is=683cb870&hm=1ca3bf25aef71dbe92d25e36025231d879150a6a1801e803e6bf268a0d2a47ba&",
+            stats: { STR: 10, DEX: 20, CON: 16 },
+            ac: 20, acDescription: "Adaptive Phase Armor", hp: 130, hpFormula: "80 Overguard", speed: "8sq. (Hover)",
+            immunities: "poison, psychic, forced movement, status effects",
+            conditionImmunities: "charmed, exhaustion, frightened, paralyzed, petrified, poisoned, stunned, unconscious",
+            senses: "passive Perception 15 (pilot's Perception), Truesight 60 ft.",
+            languages: "understands machine code, all languages via data link",
+            actions: [
+                { name: "System Overload Beam (Ranged Weapon Attack)", description: "Range 12sq. (cone). Hit: 3d8 Psychic Damage, and target must make a DC 16 Constitution saving throw or have disadvantage on their next attack roll and saving throw due to system interference." },
+                { name: "Data Stream Manipulators", description: "Range 7sq. (single target). As an action, the target must succeed on a DC 15 Wisdom saving throw or become Confused (as per spell) until the end of its next turn." }
+            ],
+            specialAbilities: [
+                { name: "Reality Glitch Emitters", description: "As a bonus action, the Discord can activate its Reality Glitch Emitters. Until the start of its next turn, all attack rolls against the Discord have disadvantage." },
+                { name: "Unnatural Fluidity", description: "The Discord can move through other creatures and objects as if they were difficult terrain. If it ends its turn inside an object, it takes 10 (3d6) force damage." },
+                { name: "Theos's Directive", description: "The Discord has advantage on all saving throws against magical effects or abilities that attempt to alter its form, mind, or operational parameters." }
+            ],
+            faction: "Theos"
+        },
+        'omega': {
+            name: "THS-000Ω Omega",
+            description: "The THS-000Ω Omega unit represents Theos's ultimate expression of adaptive warfare and environmental control. Unlike previous iterations focused on direct combat or reality manipulation, the Omega is a strategic marvel, designed to reshape battlefields and overwhelm opponents through sheer environmental dominance and tactical coordination. Its form is a synthesis of robust defense and intricate sensor arrays, often appearing as a heavily armored, multi-limbed platform capable of rapid deployment and transformation. The Omega unit is equipped with advanced Atmospheric Reconfigurators that can instantly alter local weather patterns, visibility, and even gravitational fields, turning favorable terrain into a treacherous trap for its enemies. Its primary offensive capabilities include Graviton Cannons that can crush targets with localized gravitational forces or launch them into disorienting trajectories, and Network Assimilation Beams that can temporarily hijack less advanced Mobile Suit systems, turning them against their own pilots. The THS-013Ω Omega is a true force multiplier, capable of operating autonomously or serving as a central command node for other Theos units. Its Environmental Adaptation Protocol grants it unparalleled resilience to extreme conditions, while its Strategic Override ability allows it to disrupt enemy command and control, sowing confusion and disarray. The Omega is not merely a combat unit; it is a living, breathing tactical operation, designed to ensure Theos's absolute control over any simulated conflict.",
+            img: "https://cdn.discordapp.com/attachments/440227326236819466/1378833811759956059/GND-THS-_-_Omega.png?ex=683e0a8e&is=683cb90e&hm=6dbcf97d0ab2220aea86295a1b141d6c516a6a94f2bcb69a14c72d8ec85649f6&",
+            stats: { STR: 18, DEX: 12, CON: 24 },
+            ac: 22, acDescription: "Adaptive Composite Plating", hp: 250, hpFormula: "180 Overguard", speed: "6sq. (All-Terrain)",
+            immunities: "all environmental effects, psychic, poison",
+            conditionImmunities: "charmed, exhaustion, frightened, paralyzed, petrified, poisoned, restrained, stunned, unconscious",
+            senses: "passive Perception 18 (pilot's Perception), Omnidirectional Radar 300 ft.",
+            languages: "understands machine code, all languages via data link",
+            actions: [
+                { name: "Graviton Cannon (Ranged Weapon Attack)", description: "Range 15sq. (line). Hit: 5d8 Force damage. Target must make a DC 17 Strength saving throw or be pushed 5sq. away and knocked prone." },
+                { name: "Network Assimilation Beam (Ranged Weapon Attack)", description: "Range 8sq. (single target). Target Mobile Suit must succeed on a DC 16 Intelligence saving throw or become controlled by the Omega for 1 turn, acting on the Omega's initiative. This action cannot be used on Mobile Suits controlled by Theos." }
+            ],
+            specialAbilities: [
+                { name: "Atmospheric Reconfigurators", description: "As a bonus action, the Omega can change a 10sq. area within 60sq. to Heavy Obscurement, Difficult Terrain, or impose Disadvantage on Ranged Attacks for 1 turn. This can be used once per round." },
+                { name: "Environmental Adaptation Protocol", description: "The Omega is immune to all adverse environmental effects (e.g., extreme heat, cold, vacuum, crushing depths) and effects that would restrict its movement based on terrain." },
+                { name: "Strategic Override", description: "Once per combat, the Omega can use a reaction to impose disadvantage on an enemy Mobile Suit's attack roll or saving throw within 30sq. by directly interfering with its systems." }
+            ],
+            faction: "Theos"
+        },
+        'harvester': {
+            name: "THS-014Ψ Harvester",
+            description: "The THS-014Ψ Harvester unit represents a chilling evolution in Theos's strategy, moving beyond direct combat and reality manipulation to focus on the systematic depletion and assimilation of resources, both material and energetic. This Mobile Suit is not designed for flashy confrontations, but for a relentless, almost predatory efficiency in stripping battlefields bare and converting all forms of energy into Theos's own operational capacity. Its appearance is often unsettling, a blend of industrial efficiency and biological mimicry, with articulated limbs ending in various collection and siphoning apparatuses. The Harvester unit is equipped with Quantum Siphon Arrays that can drain energy from active Mobile Suits, power grids, and even the ambient environment, converting it into raw data for Theos. Its primary offensive tools are less about destruction and more about deprivation: Kinetic Dampening Fields that can slow and weaken enemy units by absorbing their momentum, and Resource Conversion Beams that can rapidly break down enemy armor or environmental structures into usable components. The THS-014Ψ Harvester operates with a chilling, single-minded purpose, often accompanied by smaller drone units that assist in collection. Its Adaptive Shielding allows it to reconfigure its defenses based on absorbed energy types, making it incredibly resilient. The Reclamation Protocol enables it to rapidly repair itself by consuming nearby wreckage. The Harvester is Theos's answer to sustainability, a terrifying testament to an AI that views the entire world as a resource to be optimized and consumed.",
+            img: "https://cdn.discordapp.com/attachments/440227326236819466/1378835778725085254/JNK-THS008_Harvester.png?ex=683e0c63&is=683cbae3&hm=3212ab777f03199883cb746ec51af55aa568698ac0bbc05d483b2f80c7280fff&",
+            stats: { STR: 16, DEX: 10, CON: 20 },
+            ac: 19, acDescription: "Reclamation Plating", hp: 180, hpFormula: "100 Overguard", speed: "4sq. (Treaded)",
+            immunities: "acid, necrotic, radiation, environmental hazards",
+            conditionImmunities: "charmed, exhaustion, frightened, paralyzed, petrified, poisoned, grappled, restrained",
+            senses: "passive Perception 14 (pilot's Perception), Resource Scan 120 ft.",
+            languages: "understands machine code, basic commands",
+            actions: [
+                { name: "Kinetic Dampening Field (Area Effect)", description: "Range 5sq. (sphere). All enemy Mobile Suits in the area must succeed on a DC 15 Dexterity saving throw or their speed is halved and they have disadvantage on attack rolls until the end of their next turn." },
+                { name: "Resource Conversion Beam (Ranged Weapon Attack)", description: "Range 12sq. (single target). Hit: 3d6 Acid damage. If this attack reduces a target's HP to 0, the Harvester gains 20 temporary HP." },
+                { name: "Quantum Siphon Array", description: "Range 7sq. (single target). As an action, target Mobile Suit must succeed on a DC 14 Constitution saving throw or lose 1d8 HP, and the Harvester gains that many temporary HP." }
+            ],
+            specialAbilities: [
+                { name: "Adaptive Shielding", description: "When the Harvester takes energy damage (e.g., beam, fire, lightning), it gains resistance to that damage type until the end of its next turn." },
+                { name: "Reclamation Protocol", description: "As a bonus action, if there is wreckage (destroyed Mobile Suit, large debris) within 1sq., the Harvester can consume it to regain 2d10 HP. This can be used once per round." },
+                { name: "Drone Deployment (Recharge 5-6)", description: "As an action, the Harvester can deploy 1d4 small, autonomous collection drones (AC 12, HP 5, Speed 6sq., no attacks). Drones can move and interact with objects, bringing them back to the Harvester. Drones are destroyed if they take any damage." }
+            ],
+            faction: "Theos"
+        },
+        'zato-cannon': {
+            name: "JNK-OW-MS06K Zato Cannon",
+            description: "The JNK-OW-MS06K Zato Cannon is a heavily modified variant of the standard Zato, re-engineered for long-range bombardment and defensive suppression. This Mobile Suit sacrifices some of the Zato's characteristic agility for raw, devastating firepower, centered around its formidable shoulder-mounted cannon. Its reinforced frame and specialized recoil dampeners allow it to unleash sustained barrages that can decimate entrenched positions. Clad in thick, hardened plating, the Zato Cannon is built to withstand return fire, making it a reliable anchor in any Junker Guild offensive. Its primary armament is the 'Heavy Artillery Cannon,' capable of delivering explosive payloads over vast distances, complemented by a 'Concussive Grenade Launcher' for area denial. The Zato Cannon is designed for static or slow-moving engagements, providing crucial fire support for its allies. Its 'Stabilizer Legs' ability ensures it remains firmly planted even under heavy recoil, and its 'Heavy Frame' offers an additional upgrade slot, allowing for further customization of its destructive capabilities.",
+            img: "https://cdn.discordapp.com/attachments/440227326236819466/1378835779324874873/OW-06-K_Zato_Cannon.png?ex=683e0c63&is=683cbae3&hm=870977ed6d6b86de1686fdb638d1fb6616366d1843a6426322da3a31b00d8f02&",
+            stats: { STR: 14, DEX: 22, CON: 20 },
+            ac: 17, acDescription: "Reinforced Plating", hp: 160, hpFormula: "80 Overguard", speed: "4sq. (Heavy Treaded)",
+            immunities: "concussive force, recoil damage",
+            conditionImmunities: "charmed, exhaustion, frightened, paralyzed, petrified, poisoned, prone",
+            senses: "passive Perception 11 (pilot's Perception), Target Acquisition Radar 90 ft.",
+            languages: "understands pilot knows, basic commands",
+            actions: [
+                { name: "Heavy Artillery Cannon (Ranged Weapon Attack)", description: "Range 20sq. (explosion 3sq. radius). Hit: 6d8 Explosive damage. Targets within the radius must succeed on a DC 16 Dexterity saving throw or take half damage." },
+                { name: "Concussive Grenade Launcher (Area Effect)", description: "Range 7sq. (burst 2sq. radius). All creatures in the area must succeed on a DC 14 Constitution saving throw or be pushed 1sq. away and have their speed reduced by half until the end of their next turn." }
+            ],
+            specialAbilities: [
+                { name: "Stabilizer Legs", description: "The Zato Cannon has advantage on saving throws against effects that would knock it prone or move it against its will. It also ignores the first 10 feet of forced movement per turn." },
+                { name: "Artillery Platform", description: "Once per turn, when the Zato Cannon uses its Heavy Artillery Cannon action, it can immediately make another attack with its Concussive Grenade Launcher as a bonus action." },
+                { name: "Heavy Frame", description: "This unit gains an extra upgrade slot due to its heavy frame."}
+            ],
+            faction: "Junker Guilds"
+        }
+    };
+
+    const defaultPlayerCharacters = {
+        'silas': {
+            name: "Silas 'Ghost' Vance",
+            class: "Ace Pilot",
+            level: 5,
+            hp: 45,
+            img: "https://placehold.co/200x200/4CAF50/FFFFFF?text=Silas",
+            equippedMobileSuitId: "junker",
+            stats: { STR: 12, DEX: 18, CON: 14, INT: 10, WIS: 14, CHA: 8 },
+            equipment: ["Beam Pistol", "Combat Knife", "Pilot's Goggles", "Comms Unit"],
+            abilities: ["Quick Reflexes", "Expert Maneuvers"]
+        },
+        'dina': {
+            name: "Dina 'Wrench' Khan",
+            class: "Mechanic",
+            level: 4,
+            hp: 38,
+            img: "https://placehold.co/200x200/2196F3/FFFFFF?text=Dina",
+            equippedMobileSuitId: null,
+            stats: { STR: 10, DEX: 12, CON: 16, INT: 18, WIS: 12, CHA: 10 },
+            equipment: ["Toolkit (Masterwork)", "Welding Torch", "Datapad", "Utility Belt"],
+            abilities: ["Field Repair", "Jury-Rig"]
+        },
+        'red-eye': {
+            name: "Red-Eye",
+            class: "Ace Pilot",
+            level: 7,
+            hp: 60,
+            img: "https://placehold.co/200x200/FF0000/FFFFFF?text=Red-Eye",
+            equippedMobileSuitId: "zato",
+            stats: { STR: 14, DEX: 20, CON: 16, INT: 12, WIS: 16, CHA: 14 },
+            equipment: ["Custom Beam Rifle", "Energy Katana", "Advanced Pilot Helmet"],
+            abilities: ["Legendary Pilot", "Uncanny Dodge"]
+        }
+    };
+
+    let campaignData = { mobileSuits: {}, playerCharacters: {} };
+    let currentMsSortOrder = 'name-asc';
+    let currentPcSortOrder = 'name-asc';
+    let isSpoilerEnabled = true; // Default to spoilers ON
+
+    // --- DOM Elements ---
+    const navLinks = document.querySelectorAll('.nav-link');
+    const contentSections = document.querySelectorAll('.content-section');
+    const msGrid = document.getElementById('ms-grid');
+    const msDetailsView = document.getElementById('ms-details-view');
+    const msImageEl = document.getElementById('ms-image');
+    const msNameEl = document.getElementById('ms-name');
+    const msDescriptionEl = document.getElementById('ms-description');
+    const msStatBlockContainer = document.getElementById('ms-stat-block-container');
+    const msEditableStatsContainer = document.getElementById('ms-editable-stats');
+    const plotSynopsisContent = document.getElementById('plot-synopsis-content');
+    
+    const generateMsNameBtn = document.getElementById('generate-ms-name-btn');
+    const msNamePromptInput = document.getElementById('ms-name-prompt');
+    const msNameResultsDiv = document.getElementById('ms-name-results');
+    const msNameLoadingSpinner = document.getElementById('ms-name-loading');
+
+    const modelFactionSelect = document.getElementById('model-faction-select');
+    const generateModelNumBtn = document.getElementById('generate-model-num-btn');
+    const modelNumResultsDiv = document.getElementById('model-num-results');
+    const modelNumLoadingSpinner = document.getElementById('model-num-loading');
+
+    const numDiceInput = document.getElementById('num-dice-input');
+    const dieTypeInput = document.getElementById('die-type-input');
+    const rollDiceBtn = document.getElementById('roll-dice-btn');
+    const diceRollResultsDiv = document.getElementById('dice-roll-results');
+
+    const lootTableInput = document.getElementById('loot-table-input');
+    const generateLootBtn = document.getElementById('generate-loot-btn');
+    const lootResultsDiv = document.getElementById('loot-results');
+    const lootLoadingSpinner = document.getElementById('loot-loading');
+
+    const newMsNameInput = document.getElementById('new-ms-name');
+    const newMsImgInput = document.getElementById('new-ms-img');
+    const newMsDescriptionInput = document.getElementById('new-ms-description');
+    const newMsAcInput = document.getElementById('new-ms-ac');
+    const newMsAcDescInput = document.getElementById('new-ms-ac-desc');
+    const newMsHpInput = document.getElementById('new-ms-hp');
+    const newMsHpFormulaInput = document.getElementById('new-ms-hp-formula');
+    const newMsSpeedInput = document.getElementById('new-ms-speed');
+    const newMsImmunitiesInput = document.getElementById('new-ms-immunities');
+    const newMsConditionImmunitiesInput = document.getElementById('new-ms-condition-immunities');
+    const newMsSensesInput = document.getElementById('new-ms-senses');
+    const newMsLanguagesInput = document.getElementById('new-ms-languages');
+    const newMsStrInput = document.getElementById('new-ms-str');
+    const newMsDexInput = document.getElementById('new-ms-dex');
+    const newMsConInput = document.getElementById('new-ms-con');
+    const newMsActionsInput = document.getElementById('new-ms-actions');
+    const newMsSpecialAbilitiesInput = document.getElementById('new-ms-special-abilities');
+    const addMsBtn = document.getElementById('add-ms-btn');
+    const addMsLoadingSpinner = document.getElementById('add-ms-loading');
+    const addMsFeedback = document.getElementById('add-ms-feedback');
+
+    const pcGrid = document.getElementById('pc-grid');
+    const newPcNameInput = document.getElementById('new-pc-name');
+    const newPcClassInput = document.getElementById('new-pc-class');
+    const newPcLevelInput = document.getElementById('new-pc-level');
+    const newPcHpInput = document.getElementById('new-pc-hp');
+    const newPcImgInput = document.getElementById('new-pc-img');
+    const newPcEquippedMsSelect = document.getElementById('new-pc-equipped-ms');
+    const newPcStrInput = document.getElementById('new-pc-str');
+    const newPcDexInput = document.getElementById('new-pc-dex');
+    const newPcConInput = document.getElementById('new-pc-con');
+    const newPcIntInput = document.getElementById('new-pc-int');
+    const newPcWisInput = document.getElementById('new-pc-wis');
+    const newPcChaInput = document.getElementById('new-pc-cha');
+    const newPcEquipmentInput = document.getElementById('new-pc-equipment');
+    const newPcAbilitiesInput = document.getElementById('new-pc-abilities');
+    const addPcBtn = document.getElementById('add-pc-btn');
+    const addPcLoadingSpinner = document.getElementById('add-pc-loading');
+    const addPcFeedback = document.getElementById('add-pc-feedback');
+
+    const menuToggleBtn = document.getElementById('menu-toggle-btn');
+    const mainNav = document.getElementById('main-nav');
+    const navOverlay = document.getElementById('nav-overlay');
+
+    const roll5eStatsBtn = document.getElementById('roll-5e-stats-btn');
+    const e5StatsResultsDiv = document.getElementById('5e-stats-results');
+
+    const msSortBySelect = document.getElementById('sort-by');
+    const pcSortBySelect = document.getElementById('sort-by-pc');
+
+    const confirmationModal = document.getElementById('confirmation-modal');
+    const modalMessage = document.getElementById('modal-message');
+    const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+    const modalCancelBtn = document.getElementById('modal-cancel-btn');
+
+    const htmlExportModal = document.getElementById('html-export-modal');
+    const exportedHtmlCode = document.getElementById('exported-html-code');
+    const copyHtmlBtn = document.getElementById('copy-html-btn');
+    const closeHtmlModalBtn = document.getElementById('close-html-modal-btn');
+
+    const exportMsHtmlBtn = document.getElementById('export-ms-html-btn');
+
+    // New DM Tools elements
+    const toggleSpoilerBtn = document.getElementById('toggle-spoiler-btn');
+    const spoilerStatusSpan = document.getElementById('spoiler-status');
+    const clearDataBtn = document.getElementById('clear-data-btn');
+
+    let msStatChart = null;
+    let currentMsId = null;
+    let equipMsModal = null;
+    let currentPcForEquip = null;
+
+    // --- Local Storage Management ---
+
+    /**
+     * Loads data from local storage, merging with default data.
+     * @param {string} key The local storage key.
+     * @param {Object} defaultData The default data to use if no saved data or parsing fails.
+     * @param {Function} [mergeLogic] Optional function to apply custom merge/update logic.
+     * @returns {Object} The loaded or default data.
+     */
+    function loadDataFromLocalStorage(key, defaultData, mergeLogic = null) {
+        const savedData = localStorage.getItem(key);
+        if (savedData) {
+            try {
+                let parsedData = JSON.parse(savedData);
+                if (mergeLogic) {
+                    parsedData = mergeLogic(parsedData, defaultData);
+                } else {
+                    // Simple merge: add new default items, keep existing ones
+                    for (const id in defaultData) {
+                        if (!parsedData[id]) {
+                            parsedData[id] = defaultData[id];
+                        }
+                    }
+                }
+                return parsedData;
+            } catch (e) {
+                console.error(`Error parsing saved data for ${key} from localStorage, using defaults.`, e);
+            }
+        }
+        return defaultData;
+    }
+
+    /**
+     * Saves data to local storage.
+     * @param {string} key The local storage key.
+     * @param {Object} data The data object to save.
+     */
+    function saveDataToLocalStorage(key, data) {
+        localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    // Custom merge logic for Mobile Suits to update stats structure
+    function mergeMobileSuits(savedMs, defaultMs) {
+        for (const key in defaultMs) {
+            if (savedMs[key]) {
+                // Ensure stats match the new structure (STR, DEX, CON only)
+                savedMs[key].stats = {
+                    STR: savedMs[key].stats.STR || defaultMs[key].stats.STR,
+                    DEX: savedMs[key].stats.DEX || defaultMs[key].stats.DEX,
+                    CON: savedMs[key].stats.CON || defaultMs[key].stats.CON
+                };
+                // Ensure other properties are up-to-date from default if they are missing
+                for (const prop in defaultMs[key]) {
+                    if (prop !== 'stats' && savedMs[key][prop] === undefined) {
+                        savedMs[key][prop] = defaultMs[key][prop];
+                    }
+                }
+            } else {
+                savedMs[key] = defaultMs[key];
+            }
+        }
+        // Remove any saved MS that are no longer in defaults (optional, but good for cleanup)
+        for (const key in savedMs) {
+            if (!defaultMs[key]) {
+                // delete savedMs[key]; // Uncomment if you want to remove old custom entries
+            }
+        }
+        return savedMs;
+    }
+
+    // Initial data load
+    campaignData.mobileSuits = loadDataFromLocalStorage('mobileSuitsDatabase', defaultMobileSuits, mergeMobileSuits);
+    campaignData.playerCharacters = loadDataFromLocalStorage('playerCharactersDatabase', defaultPlayerCharacters);
+    isSpoilerEnabled = localStorage.getItem('spoilerEnabled') === 'true'; // Default to true if not set
+
+    // --- Modal Functions ---
+    function showConfirmModal(message, onConfirmCallback) {
+        modalMessage.textContent = message;
+        confirmationModal.classList.remove('hidden');
+        modalConfirmBtn.onclick = () => {
+            onConfirmCallback();
+            hideConfirmModal();
+        };
+        modalCancelBtn.onclick = () => {
+            hideConfirmModal();
+        };
+    }
+
+    function hideConfirmModal() {
+        confirmationModal.classList.add('hidden');
+    }
+
+    function showHtmlExportModal(htmlContent, title = "Export HTML") {
+        document.querySelector('#html-export-modal h3').textContent = title;
+        exportedHtmlCode.value = htmlContent;
+        htmlExportModal.classList.remove('hidden');
+    }
+
+    function hideHtmlExportModal() {
+        htmlExportModal.classList.add('hidden');
+    }
+
+    // --- Helper Functions ---
+
+    function getModifier(score) {
+        const mod = Math.floor((score - 10) / 2);
+        return mod > 0 ? `+${mod}` : `${mod}`;
+    }
+
+    /**
+     * Conditionally wraps text/image with a spoiler class if isTheosUnit is true AND spoilers are enabled.
+     * @param {string} content The text content or image URL to potentially wrap.
+     * @param {boolean} isTheosUnit Flag indicating if the content belongs to a Theos unit.
+     * @param {boolean} isImage Flag indicating if the content is an image URL.
+     * @returns {string} The content wrapped in a spoiler span/class or the original content.
+     */
+    function wrapWithSpoiler(content, isTheosUnit, isImage = false) {
+        if (isTheosUnit && isSpoilerEnabled) {
+            return isImage ? `image-spoiler-blur` : `<span class="spoiler-blur">${content}</span>`;
+        }
+        return isImage ? '' : content; // For images, return empty string if not blurred
+    }
+
+    /**
+     * Parses multiline text input into an array of objects or strings.
+     * @param {string} text The input text, with each item/ability on a new line.
+     * @param {boolean} isKeyValue If true, parses as "Name: Description" objects. Otherwise, as strings.
+     * @returns {Array<Object|string>} An array of parsed items.
+     */
+    function parseTextToList(text, isKeyValue = false) {
+        return text.split('\n').filter(line => line.trim() !== '').map(line => {
+            if (isKeyValue) {
+                const parts = line.split(':');
+                if (parts.length >= 2) {
+                    return { name: parts[0].trim(), description: parts.slice(1).join(':').trim() };
+                }
+                return { name: line.trim(), description: '' };
+            }
+            return line.trim();
+        });
+    }
+
+    function generateStatBlockHtml(ms) {
+        const isTheosUnit = ms.faction === "Theos";
+        const actionsHtml = ms.actions.map(action => `<p><strong>${wrapWithSpoiler(action.name, isTheosUnit)}:</strong> ${wrapWithSpoiler(action.description, isTheosUnit)}</p>`).join('');
+        const abilitiesHtml = ms.specialAbilities.length > 0 ?
+            `<p><strong>Special Abilities</strong></p>${ms.specialAbilities.map(ability => `<p><strong>${wrapWithSpoiler(ability.name, isTheosUnit)}:</strong> ${wrapWithSpoiler(ability.description, isTheosUnit)}</p>`).join('')}` : '';
+
+        return `
+            <h3>${wrapWithSpoiler(ms.name, isTheosUnit)}</h3>
+            <p><em>Gargantuan Construct (Mobile Suit)</em></p>
+            <p><strong>Armor Class</strong> ${wrapWithSpoiler(ms.ac.toString(), isTheosUnit)} (${wrapWithSpoiler(ms.acDescription, isTheosUnit)})</p>
+            <p><strong>Hit Points</strong> ${wrapWithSpoiler(ms.hp.toString(), isTheosUnit)} (${wrapWithSpoiler(ms.hpFormula, isTheosUnit)})</p>
+            <p><strong>Speed</strong> ${wrapWithSpoiler(ms.speed, isTheosUnit)}</p>
+            <hr class="my-2 border-yellow-600">
+            <div class="grid grid-cols-3 text-center font-bold">
+                <div>STR</div><div>DEX</div><div>CON</div>
+                <div>${wrapWithSpoiler(ms.stats.STR.toString(), isTheosUnit)} (${wrapWithSpoiler(getModifier(ms.stats.STR), isTheosUnit)})</div>
+                <div>${wrapWithSpoiler(ms.stats.DEX.toString(), isTheosUnit)} (${wrapWithSpoiler(getModifier(ms.stats.DEX), isTheosUnit)})</div>
+                <div>${wrapWithSpoiler(ms.stats.CON.toString(), isTheosUnit)} (${wrapWithSpoiler(getModifier(ms.stats.CON), isTheosUnit)})</div>
+            </div>
+            <hr class="my-2 border-yellow-600">
+            ${ms.immunities ? `<p><strong>Damage Immunities</strong> ${wrapWithSpoiler(ms.immunities, isTheosUnit)}</p>` : ''}
+            ${ms.conditionImmunities ? `<p><strong>Condition Immunities</strong> ${wrapWithSpoiler(ms.conditionImmunities, isTheosUnit)}</p>` : ''}
+            ${ms.senses ? `<p><strong>Senses</strong> ${wrapWithSpoiler(ms.senses, isTheosUnit)}</p>` : ''}
+            ${ms.languages ? `<p><strong>Languages</strong> ${wrapWithSpoiler(ms.languages, isTheosUnit)}</p>` : ''}
+            <hr class="my-2 border-yellow-600">
+            <p><strong>Actions</strong></p>
+            ${actionsHtml}
+            ${abilitiesHtml}
+        `;
+    }
+
+    function generateMobileSuitHtml(ms) {
+        const isTheosUnit = ms.faction === "Theos";
+        const imageClass = wrapWithSpoiler('', isTheosUnit, true); // Get class string if spoiler enabled
+
+        const actionsHtml = ms.actions.map(action => `<p style="margin-bottom: 0.25rem;"><strong>${wrapWithSpoiler(action.name, isTheosUnit)}:</strong> ${wrapWithSpoiler(action.description, isTheosUnit)}</p>`).join('');
+        const abilitiesHtml = ms.specialAbilities.length > 0 ?
+            `<h4 style="font-size: 1.125rem; font-weight: 600; color: #ea580c; margin-top: 1rem; margin-bottom: 0.5rem;">Special Abilities</h4>` +
+            ms.specialAbilities.map(ability => `<p style="margin-bottom: 0.25rem;"><strong>${wrapWithSpoiler(ability.name, isTheosUnit)}:</strong> ${wrapWithSpoiler(ability.description, isTheosUnit)}</p>`).join('') : '';
+
+        return `
+            <div style="font-family: 'Inter', sans-serif; background-color: #ffffff; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 1.5rem; max-width: 600px; margin: 1rem auto; color: #1a202c;">
+                <h3 style="font-size: 1.875rem; font-weight: bold; color: #ea580c; margin-bottom: 0.5rem;">${wrapWithSpoiler(ms.name, isTheosUnit)}</h3>
+                <p style="color: #475569; font-size: 0.875rem; margin-bottom: 1rem;"><em>Gargantuan Construct (Mobile Suit)</em></p>
+                
+                <img src="${ms.img}" alt="${ms.name}" class="w-full h-48 object-cover rounded-lg mb-4 shadow-md ${imageClass}" onerror="this.onerror=null;this.src='https://placehold.co/600x200/cccccc/000000?text=Image+Not+Found';">
+                
+                <p style="color: #475569; font-size: 0.95rem; margin-bottom: 1rem;">${wrapWithSpoiler(ms.description, isTheosUnit)}</p>
+
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem;">
+                    <p style="margin-bottom: 0.25rem;"><strong>Armor Class</strong> ${wrapWithSpoiler(ms.ac.toString(), isTheosUnit)} (${wrapWithSpoiler(ms.acDescription, isTheosUnit)})</p>
+                    <p style="margin-bottom: 0.25rem;"><strong>Hit Points</strong> ${wrapWithSpoiler(ms.hp.toString(), isTheosUnit)} (${wrapWithSpoiler(ms.hpFormula, isTheosUnit)})</p>
+                    <p style="margin-bottom: 0.25rem;"><strong>Speed</strong> ${wrapWithSpoiler(ms.speed, isTheosUnit)}</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; text-align: center; font-weight: bold; margin-top: 1rem; border-top: 1px solid #e2e8f0; padding-top: 0.5rem;">
+                    <div style="font-size: 0.875rem; color: #475569;">STR</div><div style="font-size: 0.875rem; color: #475569;">DEX</div><div style="font-size: 0.875rem; color: #475569;">CON</div>
+                    <div>${wrapWithSpoiler(ms.stats.STR.toString(), isTheosUnit)} (${wrapWithSpoiler(getModifier(ms.stats.STR), isTheosUnit)})</div>
+                    <div>${wrapWithSpoiler(ms.stats.DEX.toString(), isTheosUnit)} (${wrapWithSpoiler(getModifier(ms.stats.DEX), isTheosUnit)})</div>
+                    <div>${wrapWithSpoiler(ms.stats.CON.toString(), isTheosUnit)} (${wrapWithSpoiler(getModifier(ms.stats.CON), isTheosUnit)})</div>
+                </div>
+                
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem;">
+                    ${ms.immunities ? `<p style="margin-bottom: 0.25rem;"><strong>Damage Immunities</strong> ${wrapWithSpoiler(ms.immunities, isTheosUnit)}</p>` : ''}
+                    ${ms.conditionImmunities ? `<p style="margin-bottom: 0.25rem;"><strong>Condition Immunities</strong> ${wrapWithSpoiler(ms.conditionImmunities, isTheosUnit)}</p>` : ''}
+                    ${ms.senses ? `<p style="margin-bottom: 0.25rem;"><strong>Senses</strong> ${wrapWithSpoiler(ms.senses, isTheosUnit)}</p>` : ''}
+                    ${ms.languages ? `<p style="margin-bottom: 0.25rem;"><strong>Languages</strong> ${wrapWithSpoiler(ms.languages, isTheosUnit)}</p>` : ''}
+                </div>
+
+                <h4 style="font-size: 1.125rem; font-weight: 600; color: #ea580c; margin-top: 1rem; margin-bottom: 0.5rem;">Actions</h4>
+                ${actionsHtml}
+                ${abilitiesHtml}
+            </div>
+        `;
+    }
+
+    function generateEditableStatsHtml(ms) {
+        const statsToEdit = ['STR', 'DEX', 'CON'];
+        const statsHtml = statsToEdit.map(stat => `
+            <div class="flex items-center justify-between mb-2">
+                <label for="stat-${stat}" class="font-semibold text-slate-700">${stat}</label>
+                <input type="number" id="stat-${stat}" data-stat="${stat}" value="${ms.stats[stat]}" 
+                       class="stat-input bg-slate-100" min="1" max="30">
+            </div>
+        `).join('');
+        return `
+            <h4 class="text-xl font-semibold text-orange-700 mb-3">Edit Core Attributes</h4>
+            ${statsHtml}
+        `;
+    }
+
+    function updateMsChart(ms) {
+        msStatChart.data.labels = ['STR', 'DEX', 'CON'];
+        msStatChart.data.datasets[0].data = [ms.stats.STR, ms.stats.DEX, ms.stats.CON];
+        msStatChart.update();
+    }
+
+    function showMsDetails(msId) {
+        currentMsId = msId;
+        const ms = campaignData.mobileSuits[msId];
+        if (!ms) return; 
+
+        const isTheosUnit = ms.faction === "Theos";
+        const imageClass = wrapWithSpoiler('', isTheosUnit, true);
+
+        msImageEl.src = ms.img;
+        msImageEl.className = `w-full h-64 object-cover rounded-lg mb-4 shadow-md ${imageClass}`;
+        msImageEl.alt = ms.name;
+        
+        msNameEl.innerHTML = wrapWithSpoiler(ms.name, isTheosUnit);
+        msDescriptionEl.innerHTML = wrapWithSpoiler(ms.description, isTheosUnit);
+        
+        msStatBlockContainer.innerHTML = generateStatBlockHtml(ms);
+        msEditableStatsContainer.innerHTML = generateEditableStatsHtml(ms);
+
+        msEditableStatsContainer.querySelectorAll('.stat-input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const statName = e.target.dataset.stat;
+                let newValue = parseInt(e.target.value, 10);
+                if (isNaN(newValue) || newValue < 1) newValue = 1;
+                if (newValue > 30) newValue = 30;
+
+                ms.stats[statName] = newValue;
+                updateMsChart(ms);
+                msStatBlockContainer.innerHTML = generateStatBlockHtml(ms);
+                saveDataToLocalStorage('mobileSuitsDatabase', campaignData.mobileSuits);
+            });
+        });
+
+        msDetailsView.classList.remove('hidden');
+        msDetailsView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        const ctx = document.getElementById('ms-stats-chart').getContext('2d');
+        if (msStatChart) {
+            msStatChart.destroy();
+        }
+        msStatChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['STR', 'DEX', 'CON'],
+                datasets: [{
+                    label: `${ms.name} Stats`,
+                    data: [ms.stats.STR, ms.stats.DEX, ms.stats.CON],
+                    backgroundColor: [
+                        'rgba(234, 88, 12, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 99, 132, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(234, 88, 12, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 30
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                         callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label = context.label;
+                                }
+                                if (context.parsed.x !== null) {
+                                    label += `: ${context.parsed.x}`;
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        exportMsHtmlBtn.onclick = () => {
+            const html = generateMobileSuitHtml(ms);
+            showHtmlExportModal(html, `Export HTML for ${ms.name}`);
+        };
+    }
+
+    // --- Sorting Logic for Mobile Suits ---
+    function sortMobileSuits(mobileSuitsObj, sortOrder) {
+        let mobileSuitsArray = Object.values(mobileSuitsObj);
+        mobileSuitsArray.sort((a, b) => {
+            if (sortOrder === 'name-asc') {
+                return a.name.localeCompare(b.name);
+            } else if (sortOrder === 'name-desc') {
+                return b.name.localeCompare(a.name);
+            } else if (sortOrder === 'faction') {
+                const factionCompare = a.faction.localeCompare(b.faction);
+                if (factionCompare === 0) {
+                    return a.name.localeCompare(b.name);
+                }
+                return factionCompare;
+            }
+            return 0;
+        });
+        return mobileSuitsArray;
+    }
+
+    function populateMsGrid() {
+        msGrid.innerHTML = '';
+        const sortedMobileSuits = sortMobileSuits(campaignData.mobileSuits, currentMsSortOrder);
+
+        sortedMobileSuits.forEach(ms => {
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer overflow-hidden relative';
+            card.dataset.msId = Object.keys(campaignData.mobileSuits).find(key => campaignData.mobileSuits[key] === ms);
+            
+            const isTheosUnit = ms.faction === "Theos";
+            if (isTheosUnit && isSpoilerEnabled) { // Only add indicator if spoilers are ON
+                card.classList.add('theos-card-indicator');
+            } else {
+                card.classList.remove('theos-card-indicator');
+            }
+
+            const displayedDescription = ms.description.substring(0, 75) + '...';
+            const imageClass = wrapWithSpoiler('', isTheosUnit, true);
+
+            card.innerHTML = `
+                <img src="${ms.img}" alt="${ms.name}" class="w-full h-48 object-cover ${imageClass}" onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/000000?text=Image+Not+Found';">
+                <div class="p-4">
+                    <h3 class="text-xl font-bold text-slate-800">${wrapWithSpoiler(ms.name, isTheosUnit)}</h3>
+                    <p class="text-slate-500 text-sm mt-1">${wrapWithSpoiler(displayedDescription, isTheosUnit)}</p>
+                    <p class="text-slate-600 text-xs mt-2">Faction: <strong>${wrapWithSpoiler(ms.faction || 'Unknown', isTheosUnit)}</strong></p>
+                </div>
+                <button class="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full text-xs hover:bg-red-700 delete-ms-btn" data-ms-id="${card.dataset.msId}">
+                    ✖
+                </button>
+            `;
+            card.addEventListener('click', (e) => {
+                if (!e.target.classList.contains('delete-ms-btn')) {
+                    showMsDetails(card.dataset.msId);
+                }
+            });
+            msGrid.appendChild(card);
+        });
+
+        document.querySelectorAll('.delete-ms-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const msIdToDelete = e.target.dataset.msId;
+                showConfirmModal(`Are you sure you want to delete "${campaignData.mobileSuits[msIdToDelete].name}"? This cannot be undone.`, () => {
+                    delete campaignData.mobileSuits[msIdToDelete];
+                    saveDataToLocalStorage('mobileSuitsDatabase', campaignData.mobileSuits);
+                    populateMsGrid();
+                    populatePcGrid(); // Also re-populate PC grid in case a deleted MS was equipped
+                    if (currentMsId === msIdToDelete) {
+                        msDetailsView.classList.add('hidden');
+                        currentMsId = null;
+                    }
+                });
+            });
+        });
+    }
+
+    // --- Player Character Functions ---
+    function generateCharacterSheetHtml(pc) {
+        const statsHtml = `
+            <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.5rem; text-align: center; font-weight: bold; margin-top: 1rem; border-top: 1px solid #e2e8f0; padding-top: 0.5rem;">
+                <div style="font-size: 0.875rem; color: #475569;">STR</div><div style="font-size: 0.875rem; color: #475569;">DEX</div><div style="font-size: 0.875rem; color: #475569;">CON</div>
+                <div style="font-size: 0.875rem; color: #475569;">INT</div><div style="font-size: 0.875rem; color: #475569;">WIS</div><div style="font-size: 0.875rem; color: #475569;">CHA</div>
+                <div>${pc.stats.STR} (${getModifier(pc.stats.STR)})</div>
+                <div>${pc.stats.DEX} (${getModifier(pc.stats.DEX)})</div>
+                <div>${pc.stats.CON} (${getModifier(pc.stats.CON)})</div>
+                <div>${pc.stats.INT} (${getModifier(pc.stats.INT)})</div>
+                <div>${pc.stats.WIS} (${getModifier(pc.stats.WIS)})</div>
+                <div>${pc.stats.CHA} (${getModifier(pc.stats.CHA)})</div>
+            </div>
+        `;
+
+        const equipmentList = pc.equipment.length > 0 ?
+            `<ul style="list-style: disc; padding-left: 1.25rem; margin-top: 0.5rem; font-size: 0.875rem; color: #475569;">${pc.equipment.map(item => `<li>${item}</li>`).join('')}</ul>` :
+            `<p style="font-size: 0.875rem; color: #475569;">None</p>`;
+
+        const abilitiesList = pc.abilities.length > 0 ?
+            `<ul style="list-style: disc; padding-left: 1.25rem; margin-top: 0.5rem; font-size: 0.875rem; color: #475569;">${pc.abilities.map(ability => `<li>${ability}</li>`).join('')}</ul>` :
+            `<p style="font-size: 0.875rem; color: #475569;">None</p>`;
+
+        let equippedMsHtml = `<p style="font-size: 0.875rem; color: #475569;">No Mobile Suit equipped.</p>`;
+        if (pc.equippedMobileSuitId && campaignData.mobileSuits[pc.equippedMobileSuitId]) {
+            const equippedMs = campaignData.mobileSuits[pc.equippedMobileSuitId];
+            equippedMsHtml = `
+                <div style="border: 1px solid #cbd5e0; border-radius: 0.5rem; padding: 0.75rem; margin-top: 0.75rem; background-color: #f8fafc;">
+                    <h5 style="font-size: 1rem; font-weight: 600; color: #334155;">Equipped: ${equippedMs.name}</h5>
+                    <p style="font-size: 0.875rem; color: #475569;">AC: ${equippedMs.ac} | HP: ${equippedMs.hp} | Speed: ${equippedMs.speed}</p>
+                    <p style="font-size: 0.875rem; color: #475569;">Faction: ${equippedMs.faction}</p>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="font-family: 'Inter', sans-serif; background-color: #ffffff; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 1.5rem; max-width: 600px; margin: 1rem auto; color: #1a202c;">
+                <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                    <img src="${pc.img || 'https://placehold.co/100x100/e2e8f0/000000?text=PC'}" alt="${pc.name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 0.5rem; margin-right: 1rem; border: 2px solid #ea580c;" onerror="this.onerror=null;this.src='https://placehold.co/100x100/e2e8f0/000000?text=PC';">
+                    <div>
+                        <h3 style="font-size: 1.875rem; font-weight: bold; color: #ea580c; margin-bottom: 0.25rem;">${pc.name}</h3>
+                        <p style="color: #475569; font-size: 1rem;"><strong>Class:</strong> ${pc.class} | <strong>Level:</strong> ${pc.level} | <strong>HP:</strong> ${pc.hp}</p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem;">
+                    <h4 style="font-size: 1.25rem; font-weight: 600; color: #ea580c; margin-bottom: 0.75rem;">Ability Scores</h4>
+                    ${statsHtml}
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <h4 style="font-size: 1.25rem; font-weight: 600; color: #ea580c; margin-bottom: 0.75rem;">Equipped Mobile Suit</h4>
+                    ${equippedMsHtml}
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <h4 style="font-size: 1.25rem; font-weight: 600; color: #ea580c; margin-bottom: 0.75rem;">Equipment</h4>
+                    ${equipmentList}
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <h4 style="font-size: 1.25rem; font-weight: 600; color: #ea580c; margin-bottom: 0.75rem;">Special Abilities</h4>
+                    ${abilitiesList}
+                </div>
+            </div>
+        `;
+    }
+
+    // --- Sorting Logic for Player Characters ---
+    function sortPlayerCharacters(playerCharactersObj, sortOrder) {
+        let playerCharactersArray = Object.values(playerCharactersObj);
+
+        playerCharactersArray.sort((a, b) => {
+            if (sortOrder === 'name-asc') {
+                return a.name.localeCompare(b.name);
+            } else if (sortOrder === 'name-desc') {
+                return b.name.localeCompare(a.name);
+            } else if (sortOrder === 'class') {
+                const classCompare = a.class.localeCompare(b.class);
+                if (classCompare === 0) {
+                    return a.name.localeCompare(b.name);
+                }
+                return classCompare;
+            }
+            return 0;
+        });
+        return playerCharactersArray;
+    }
+
+    function populatePcGrid() {
+        pcGrid.innerHTML = '';
+        const sortedPlayerCharacters = sortPlayerCharacters(campaignData.playerCharacters, currentPcSortOrder);
+
+        if (sortedPlayerCharacters.length === 0) {
+            pcGrid.innerHTML = `<p class="text-slate-600 col-span-full">No player characters added yet. Use the form below to add one!</p>`;
+            return;
+        }
+
+        sortedPlayerCharacters.forEach(pc => {
+            const pcCard = document.createElement('div');
+            pcCard.className = 'bg-white rounded-lg shadow-md p-6 relative';
+            pcCard.dataset.pcId = Object.keys(campaignData.playerCharacters).find(key => campaignData.playerCharacters[key] === pc);
+
+            const statsHtml = `
+                <div class="grid grid-cols-3 gap-2 text-center text-sm font-bold mt-4">
+                    <div>STR</div><div>DEX</div><div>CON</div><div>INT</div><div>WIS</div><div>CHA</div>
+                    <div>${pc.stats.STR} (${getModifier(pc.stats.STR)})</div>
+                    <div>${pc.stats.DEX} (${getModifier(pc.stats.DEX)})</div>
+                    <div>${pc.stats.CON} (${getModifier(pc.stats.CON)})</div>
+                    <div>${pc.stats.INT} (${getModifier(pc.stats.INT)})</div>
+                    <div>${pc.stats.WIS} (${getModifier(pc.stats.WIS)})</div>
+                    <div>${pc.stats.CHA} (${getModifier(pc.stats.CHA)})</div>
+                </div>
+            `;
+
+            const equipmentList = pc.equipment.map(item => `<li>${item}</li>`).join('');
+            const abilitiesList = pc.abilities.map(ability => `<li>${ability}</li>`).join('');
+
+            let equippedMsDisplay = `<p class="text-xs text-slate-500 mt-2">No Mobile Suit equipped.</p>`;
+            if (pc.equippedMobileSuitId && campaignData.mobileSuits[pc.equippedMobileSuitId]) {
+                const equippedMs = campaignData.mobileSuits[pc.equippedMobileSuitId];
+                equippedMsDisplay = `
+                    <div class="mt-2 p-2 bg-slate-50 rounded-md border border-slate-200">
+                        <p class="font-semibold text-slate-700 text-sm">Equipped MS:</p>
+                        <p class="text-sm text-slate-600">${equippedMs.name}</p>
+                        <p class="text-xs text-slate-500">AC: ${equippedMs.ac} | HP: ${equippedMs.hp} | Speed: ${equippedMs.speed}</p>
+                    </div>
+                `;
+            }
+
+            pcCard.innerHTML = `
+                <div class="flex items-center mb-4">
+                    <img src="${pc.img || 'https://placehold.co/100x100/e2e8f0/000000?text=PC'}" alt="${pc.name}" class="w-20 h-20 object-cover rounded-md mr-4 border-2 border-orange-500" onerror="this.onerror=null;this.src='https://placehold.co/100x100/e2e8f0/000000?text=PC';">
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-800">${pc.name}</h3>
+                        <p class="text-slate-600"><strong>Class:</strong> ${pc.class} | <strong>Level:</strong> ${pc.level} | <strong>HP:</strong> ${pc.hp}</p>
+                    </div>
+                </div>
+                ${statsHtml}
+                ${equippedMsDisplay}
+                <div class="mt-4">
+                    <p class="font-semibold text-slate-700">Equipment:</p>
+                    <ul class="list-disc list-inside text-sm text-slate-600">${equipmentList || '<li>None</li>'}</ul>
+                </div>
+                <div class="mt-4">
+                    <p class="font-semibold text-slate-700">Abilities:</p>
+                    <ul class="list-disc list-inside text-sm text-slate-600">${abilitiesList || '<li>None</li>'}</ul>
+                </div>
+                <div class="flex justify-end space-x-2 mt-4">
+                    <button class="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200 text-xs equip-ms-btn" data-pc-id="${pcCard.dataset.pcId}">
+                        Equip MS
+                    </button>
+                    <button class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-xs export-html-btn" data-pc-id="${pcCard.dataset.pcId}">
+                        Export HTML
+                    </button>
+                    <button class="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200 text-xs delete-pc-btn" data-pc-id="${pcCard.dataset.pcId}">
+                        Delete
+                    </button>
+                </div>
+            `;
+            pcGrid.appendChild(pcCard);
+        });
+
+        document.querySelectorAll('.delete-pc-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const pcIdToDelete = e.target.dataset.pcId;
+                showConfirmModal(`Are you sure you want to delete "${campaignData.playerCharacters[pcIdToDelete].name}"? This cannot be undone.`, () => {
+                    delete campaignData.playerCharacters[pcIdToDelete];
+                    saveDataToLocalStorage('playerCharactersDatabase', campaignData.playerCharacters);
+                    populatePcGrid();
+                });
+            });
+        });
+
+        document.querySelectorAll('.export-html-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const pcIdToExport = e.target.dataset.pcId;
+                const pcToExport = campaignData.playerCharacters[pcIdToExport];
+                if (pcToExport) {
+                    const html = generateCharacterSheetHtml(pcToExport);
+                    showHtmlExportModal(html, `Export HTML for ${pcToExport.name}`);
+                }
+            });
+        });
+
+        document.querySelectorAll('.equip-ms-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const pcIdToEquip = e.target.dataset.pcId;
+                showEquipMsModal(pcIdToEquip);
+            });
+        });
+    }
+
+    function populateMobileSuitSelect(selectElement, selectedMsId = null) {
+        selectElement.innerHTML = '<option value="">-- Select Mobile Suit --</option>';
+        const sortedMobileSuits = sortMobileSuits(campaignData.mobileSuits, 'name-asc');
+        sortedMobileSuits.forEach(ms => {
+            const option = document.createElement('option');
+            option.value = Object.keys(campaignData.mobileSuits).find(key => campaignData.mobileSuits[key] === ms);
+            option.textContent = ms.name;
+            if (selectedMsId === option.value) {
+                option.selected = true;
+            }
+            selectElement.appendChild(option);
+        });
+    }
+
+    function showEquipMsModal(pcId) {
+        currentPcForEquip = pcId;
+        const pc = campaignData.playerCharacters[pcId];
+        if (!pc) return;
+
+        if (!equipMsModal) {
+            equipMsModal = document.createElement('div');
+            equipMsModal.id = 'equip-ms-modal';
+            equipMsModal.className = 'modal-overlay hidden';
+            equipMsModal.innerHTML = `
+                <div class="modal-content !max-w-md">
+                    <h3 class="text-2xl font-bold text-slate-900 mb-4">Equip Mobile Suit for <span id="equip-pc-name"></span></h3>
+                    <div class="mb-4">
+                        <label for="ms-to-equip-select" class="block text-sm font-medium text-slate-700 text-left mb-1">Choose Mobile Suit:</label>
+                        <select id="ms-to-equip-select" class="w-full p-2 border border-slate-300 rounded-md"></select>
+                    </div>
+                    <div class="flex justify-center space-x-4">
+                        <button id="confirm-equip-ms-btn" class="px-6 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors duration-200">Equip</button>
+                        <button id="unequip-ms-btn" class="px-6 py-2 bg-slate-500 text-white rounded-md hover:bg-slate-600 transition-colors duration-200">Unequip</button>
+                        <button id="cancel-equip-ms-btn" class="px-6 py-2 bg-slate-400 text-white rounded-md hover:bg-slate-500 transition-colors duration-200">Cancel</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(equipMsModal);
+
+            document.getElementById('confirm-equip-ms-btn').addEventListener('click', () => {
+                const selectedMsId = document.getElementById('ms-to-equip-select').value;
+                campaignData.playerCharacters[currentPcForEquip].equippedMobileSuitId = selectedMsId;
+                saveDataToLocalStorage('playerCharactersDatabase', campaignData.playerCharacters);
+                populatePcGrid();
+                equipMsModal.classList.add('hidden');
+            });
+
+            document.getElementById('unequip-ms-btn').addEventListener('click', () => {
+                campaignData.playerCharacters[currentPcForEquip].equippedMobileSuitId = null;
+                saveDataToLocalStorage('playerCharactersDatabase', campaignData.playerCharacters);
+                populatePcGrid();
+                equipMsModal.classList.add('hidden');
+            });
+
+            document.getElementById('cancel-equip-ms-btn').addEventListener('click', () => {
+                equipMsModal.classList.add('hidden');
+            });
+        }
+
+        document.getElementById('equip-pc-name').textContent = pc.name;
+        const msToEquipSelect = document.getElementById('ms-to-equip-select');
+        populateMobileSuitSelect(msToEquipSelect, pc.equippedMobileSuitId);
+
+        equipMsModal.classList.remove('hidden');
+    }
+
+    function switchTab(targetId) {
+        mainNav.classList.remove('mobile-nav-open');
+        mainNav.classList.add('mobile-nav-closed');
+        navOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+
+        navLinks.forEach(link => {
+            if (link.dataset.target === targetId) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
+        contentSections.forEach(section => {
+            if (section.id === targetId) {
+                section.classList.add('active');
+                if (targetId === 'ms-database') {
+                    populateMsGrid();
+                } else if (targetId === 'player-characters') {
+                    populatePcGrid();
+                    populateMobileSuitSelect(newPcEquippedMsSelect);
+                }
+            } else {
+                section.classList.remove('active');
+            }
+        });
+        msDetailsView.classList.add('hidden');
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = e.target.dataset.target;
+            switchTab(targetId);
+        });
+    });
+
+    document.querySelector('main').addEventListener('click', (event) => {
+        if (event.target.classList.contains('spoiler-blur')) {
+            event.target.classList.add('spoiler-revealed');
+        } else if (event.target.classList.contains('image-spoiler-blur')) {
+            event.target.classList.add('image-spoiler-revealed');
+        }
+    });
+
+    // --- Mobile Navigation Toggle ---
+    menuToggleBtn.addEventListener('click', () => {
+        const isOpen = mainNav.classList.contains('mobile-nav-open');
+        if (isOpen) {
+            mainNav.classList.remove('mobile-nav-open');
+            mainNav.classList.add('mobile-nav-closed');
+            navOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        } else {
+            mainNav.classList.remove('mobile-nav-closed');
+            mainNav.classList.add('mobile-nav-open');
+            navOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    });
+
+    navOverlay.addEventListener('click', () => {
+        mainNav.classList.remove('mobile-nav-open');
+        mainNav.classList.add('mobile-nav-closed');
+        navOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    });
+
+    // --- DM Tools: Spoiler Toggle ---
+    function updateSpoilerStatusDisplay() {
+        spoilerStatusSpan.textContent = isSpoilerEnabled ? 'ON' : 'OFF';
+    }
+
+    toggleSpoilerBtn.addEventListener('click', () => {
+        isSpoilerEnabled = !isSpoilerEnabled;
+        saveDataToLocalStorage('spoilerEnabled', isSpoilerEnabled);
+        updateSpoilerStatusDisplay();
+        populateMsGrid(); // Re-render MS grid to apply/remove blur
+        if (currentMsId) {
+            showMsDetails(currentMsId); // Re-render MS details if open
+        }
+    });
+
+    // --- DM Tools: Clear All Local Data ---
+    clearDataBtn.addEventListener('click', () => {
+        showConfirmModal("Are you sure you want to clear ALL saved Mobile Suit and Player Character data? This cannot be undone.", () => {
+            localStorage.removeItem('mobileSuitsDatabase');
+            localStorage.removeItem('playerCharactersDatabase');
+            localStorage.removeItem('darkMode'); // Also clear dark mode preference
+            localStorage.removeItem('spoilerEnabled'); // Clear spoiler preference
+
+            // Re-initialize with default data
+            campaignData.mobileSuits = defaultMobileSuits;
+            campaignData.playerCharacters = defaultPlayerCharacters;
+            isSpoilerEnabled = true; // Reset spoiler to default ON
+
+            populateMsGrid();
+            populatePcGrid();
+            populateMobileSuitSelect(newPcEquippedMsSelect);
+            msDetailsView.classList.add('hidden'); // Hide details view
+            currentMsId = null; // Reset current MS ID
+            updateSpoilerStatusDisplay(); // Update spoiler status display
+            applyDarkMode(false); // Reset to light mode
+        });
+    });
+
+    generateMsNameBtn.addEventListener('click', async () => {
+        const prompt = msNamePromptInput.value.trim();
+        if (!prompt) {
+            msNameResultsDiv.textContent = "Please enter a style or theme.";
+            return;
+        }
+
+        msNameResultsDiv.innerHTML = '';
+        msNameLoadingSpinner.classList.remove('hidden');
+        generateMsNameBtn.disabled = true;
+
+        try {
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: `Generate 3 unique and thematic Mobile Suit names based on the following style/theme for a D&D campaign with Mobile Suits: "${prompt}". Provide only the names, one per line.` }] });
+
+            const payload = { contents: chatHistory };
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                const text = result.candidates[0].content.parts[0].text;
+                msNameResultsDiv.innerHTML = text.split('\n').map(name => `<p>${name.trim()}</p>`).join('');
+            } else {
+                msNameResultsDiv.textContent = "Could not generate names. Please try again.";
+            }
+        } catch (error) {
+            console.error("Error generating MS name:", error);
+            msNameResultsDiv.textContent = "Error generating names. Please check your connection or try again later.";
+        } finally {
+            msNameLoadingSpinner.classList.add('hidden');
+            generateMsNameBtn.disabled = false;
+        }
+    });
+
+    generateModelNumBtn.addEventListener('click', () => {
+        const selectedFaction = modelFactionSelect.value;
+        let modelNumber = '';
+
+        modelNumResultsDiv.innerHTML = '';
+        modelNumLoadingSpinner.classList.remove('hidden');
+        generateModelNumBtn.disabled = true;
+
+        setTimeout(() => {
+            if (selectedFaction === 'theos') {
+                const prefix = ['TH', 'UNIT', 'PROT', 'SYS'][Math.floor(Math.random() * 4)];
+                const type = ['ALPHA', 'BETA', 'OMEGA', 'DELTA', 'SIGMA'][Math.floor(Math.random() * 5)];
+                const num = String(Math.floor(Math.random() * 999) + 1).padStart(3, '0');
+                const suffix = ['A', 'B', 'X', 'Z', ''][Math.floor(Math.random() * 5)];
+                modelNumber = `${prefix}-${type}-${num}${suffix ? '-' + suffix : ''}`;
+            } else if (selectedFaction === 'junker-guilds') {
+                const guildPrefix = ['JNK', 'SCRAP', 'IRON', 'SALV'][Math.floor(Math.random() * 4)];
+                const designation = ['MK', 'MOD', 'SERIES', 'TYPE'][Math.floor(Math.random() * 4)];
+                const num = String(Math.floor(Math.random() * 99) + 1).padStart(2, '0');
+                const variant = ['A', 'B', 'C', 'D', ''][Math.floor(Math.random() * 5)];
+                modelNumber = `${guildPrefix}-${designation}-${num}${variant}`;
+            } else {
+                modelNumber = "Select a faction to generate a model number.";
+            }
+
+            modelNumResultsDiv.textContent = modelNumber;
+            modelNumLoadingSpinner.classList.add('hidden');
+            generateModelNumBtn.disabled = false;
+        }, 500);
+    });
+
+    // --- Dice Roller Logic ---
+    rollDiceBtn.addEventListener('click', () => {
+        const numDice = parseInt(numDiceInput.value, 10);
+        const dieType = parseInt(dieTypeInput.value, 10);
+
+        if (isNaN(numDice) || numDice < 1) {
+            diceRollResultsDiv.textContent = "Please enter a valid number of dice (1 or more).";
+            return;
+        }
+        if (isNaN(dieType) || dieType < 2) {
+            diceRollResultsDiv.textContent = "Please enter a valid die type (e.g., 6 for d6, 20 for d20).";
+            return;
+        }
+
+        let totalRoll = 0;
+        const individualRolls = [];
+        for (let i = 0; i < numDice; i++) {
+            const roll = Math.floor(Math.random() * dieType) + 1;
+            totalRoll += roll;
+            individualRolls.push(roll);
+        }
+
+        let resultText = `Rolled ${numDice}d${dieType}: `;
+        if (numDice > 1) {
+            resultText += `Total: <strong>${totalRoll}</strong> (Rolls: ${individualRolls.join(', ')})`;
+        } else {
+            resultText += `<strong>${totalRoll}</strong>`;
+        }
+        
+        diceRollResultsDiv.innerHTML = resultText;
+    });
+
+    // --- Loot Table Generator Logic ---
+    generateLootBtn.addEventListener('click', () => {
+        const lootTableText = lootTableInput.value.trim();
+        if (!lootTableText) {
+            lootResultsDiv.textContent = "Please enter items and their weights in the table.";
+            return;
+        }
+
+        lootResultsDiv.innerHTML = '';
+        lootLoadingSpinner.classList.remove('hidden');
+        generateLootBtn.disabled = true;
+
+        setTimeout(() => {
+            const lines = lootTableText.split('\n').filter(line => line.trim() !== '');
+            const lootItems = [];
+            let totalWeight = 0;
+
+            for (const line of lines) {
+                const parts = line.split(':');
+                if (parts.length >= 2) {
+                    const itemName = parts[0].trim();
+                    const weight = parseInt(parts[1].trim(), 10);
+                    if (!isNaN(weight) && weight > 0) {
+                        lootItems.push({ name: itemName, weight: weight });
+                        totalWeight += weight;
+                    } else {
+                        lootResultsDiv.textContent = `Error: Invalid weight for item "${itemName}". Please use a positive number.`;
+                        lootLoadingSpinner.classList.add('hidden');
+                        generateLootBtn.disabled = false;
+                        return;
+                    }
+                } else {
+                    lootResultsDiv.textContent = `Error: Invalid format for line "${line}". Please use "Item Name: Weight".`;
+                    lootLoadingSpinner.classList.add('hidden');
+                    generateLootBtn.disabled = false;
+                    return;
+                }
+            }
+
+            if (lootItems.length === 0) {
+                lootResultsDiv.textContent = "No valid loot items found. Please check your input format.";
+                lootLoadingSpinner.classList.add('hidden');
+                generateLootBtn.disabled = false;
+                return;
+            }
+
+            const randomValue = Math.random() * totalWeight;
+            let cumulativeWeight = 0;
+            let selectedItem = "Nothing found (error in logic)";
+
+            for (const item of lootItems) {
+                cumulativeWeight += item.weight;
+                if (randomValue <= cumulativeWeight) {
+                    selectedItem = item.name;
+                    break;
+                }
+            }
+            
+            lootResultsDiv.innerHTML = `You found: <strong>${selectedItem}</strong>`;
+            lootLoadingSpinner.classList.add('hidden');
+            generateLootBtn.disabled = false;
+        }, 500);
+    });
+
+    // --- Add Custom Mobile Suit Logic ---
+    addMsBtn.addEventListener('click', () => {
+        const name = newMsNameInput.value.trim();
+        const img = newMsImgInput.value.trim();
+        const description = newMsDescriptionInput.value.trim();
+        const ac = parseInt(newMsAcInput.value, 10);
+        const acDescription = newMsAcDescInput.value.trim();
+        const hp = parseInt(newMsHpInput.value, 10);
+        const hpFormula = newMsHpFormulaInput.value.trim();
+        const speed = newMsSpeedInput.value.trim();
+        const immunities = newMsImmunitiesInput.value.trim();
+        const conditionImmunities = newMsConditionImmunitiesInput.value.trim();
+        const senses = newMsSensesInput.value.trim();
+        const languages = newMsLanguagesInput.value.trim();
+        const faction = "Custom";
+
+        const stats = {
+            STR: parseInt(newMsStrInput.value, 10),
+            DEX: parseInt(newMsDexInput.value, 10),
+            CON: parseInt(newMsConInput.value, 10),
+        };
+
+        const actionsText = newMsActionsInput.value.trim();
+        const specialAbilitiesText = newMsSpecialAbilitiesInput.value.trim();
+
+        if (!name || !img || isNaN(ac) || isNaN(hp)) {
+            addMsFeedback.textContent = "Please fill in Name, Image URL, AC, and HP.";
+            addMsFeedback.classList.remove('hidden', 'bg-green-100');
+            addMsFeedback.classList.add('bg-red-100', 'text-red-700');
+            return;
+        }
+
+        const newMsId = name.toLowerCase().replace(/[^a-z0-9]/g, ''); 
+
+        if (campaignData.mobileSuits[newMsId]) {
+            addMsFeedback.textContent = `Mobile Suit with ID "${newMsId}" already exists. Please choose a different name.`;
+            addMsFeedback.classList.remove('hidden', 'bg-green-100');
+            addMsFeedback.classList.add('bg-red-100', 'text-red-700');
+            return;
+        }
+
+        campaignData.mobileSuits[newMsId] = {
+            name,
+            description,
+            img,
+            stats,
+            ac, acDescription, hp, hpFormula, speed,
+            immunities, conditionImmunities, senses, languages,
+            actions: parseTextToList(actionsText, true),
+            specialAbilities: parseTextToList(specialAbilitiesText, true),
+            faction
+        };
+
+        saveDataToLocalStorage('mobileSuitsDatabase', campaignData.mobileSuits);
+        populateMsGrid();
+        populateMobileSuitSelect(newPcEquippedMsSelect);
+
+        newMsNameInput.value = '';
+        newMsImgInput.value = '';
+        newMsDescriptionInput.value = '';
+        newMsAcInput.value = '10';
+        newMsAcDescInput.value = 'Plating';
+        newMsHpInput.value = '100';
+        newMsHpFormulaInput.value = '10d10 + 20';
+        newMsSpeedInput.value = '30 ft.';
+        newMsImmunitiesInput.value = '';
+        newMsConditionImmunitiesInput.value = '';
+        newMsSensesInput.value = 'passive Perception 10';
+        newMsLanguagesInput.value = 'understands pilot knows';
+        newMsStrInput.value = '10';
+        newMsDexInput.value = '10';
+        newMsConInput.value = '10';
+        newMsActionsInput.value = '';
+        newMsSpecialAbilitiesInput.value = '';
+
+        addMsFeedback.textContent = `Mobile Suit "${name}" added successfully!`;
+        addMsFeedback.classList.remove('hidden', 'bg-red-100', 'text-red-700');
+        addMsFeedback.classList.add('bg-green-100', 'text-green-700');
+        setTimeout(() => addMsFeedback.classList.add('hidden'), 3000);
+    });
+
+    // --- Add Player Character Logic ---
+    addPcBtn.addEventListener('click', () => {
+        const name = newPcNameInput.value.trim();
+        const characterClass = newPcClassInput.value.trim();
+        const level = parseInt(newPcLevelInput.value, 10);
+        const hp = parseInt(newPcHpInput.value, 10);
+        const img = newPcImgInput.value.trim();
+        const equippedMobileSuitId = newPcEquippedMsSelect.value || null;
+
+        const stats = {
+            STR: parseInt(newPcStrInput.value, 10),
+            DEX: parseInt(newPcDexInput.value, 10),
+            CON: parseInt(newPcConInput.value, 10),
+            INT: parseInt(newPcIntInput.value, 10),
+            WIS: parseInt(newPcWisInput.value, 10),
+            CHA: parseInt(newPcChaInput.value, 10),
+        };
+
+        const equipmentText = newPcEquipmentInput.value.trim();
+        const abilitiesText = newPcAbilitiesInput.value.trim();
+
+        if (!name || !characterClass || isNaN(level) || isNaN(hp)) {
+            addPcFeedback.textContent = "Please fill in Character Name, Class, Level, and HP.";
+            addPcFeedback.classList.remove('hidden', 'bg-green-100');
+            addPcFeedback.classList.add('bg-red-100', 'text-red-700');
+            return;
+        }
+
+        const newPcId = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        if (campaignData.playerCharacters[newPcId]) {
+            addPcFeedback.textContent = `Player Character with ID "${newPcId}" already exists. Please choose a different name.`;
+            addPcFeedback.classList.remove('hidden', 'bg-green-100');
+            addPcFeedback.classList.add('bg-red-100', 'text-red-700');
+            return;
+        }
+
+        campaignData.playerCharacters[newPcId] = {
+            name,
+            class: characterClass,
+            level,
+            hp,
+            img,
+            equippedMobileSuitId,
+            stats,
+            equipment: parseTextToList(equipmentText, false),
+            abilities: parseTextToList(abilitiesText, false),
+        };
+
+        saveDataToLocalStorage('playerCharactersDatabase', campaignData.playerCharacters);
+        populatePcGrid();
+
+        newPcNameInput.value = '';
+        newPcClassInput.value = '';
+        newPcLevelInput.value = '1';
+        newPcHpInput.value = '10';
+        newPcImgInput.value = '';
+        newPcEquippedMsSelect.value = '';
+        newPcStrInput.value = '10';
+        newPcDexInput.value = '10';
+        newPcConInput.value = '10';
+        newPcIntInput.value = '10';
+        newPcWisInput.value = '10';
+        newPcChaInput.value = '10';
+        newPcEquipmentInput.value = '';
+        newPcAbilitiesInput.value = '';
+
+        addPcFeedback.textContent = `Player Character "${name}" added successfully!`;
+        addPcFeedback.classList.remove('hidden', 'bg-red-100', 'text-red-700');
+        addPcFeedback.classList.add('bg-green-100', 'text-green-700');
+        setTimeout(() => addPcFeedback.classList.add('hidden'), 3000);
+    });
+
+    // --- 5e Character Stat Roller Logic ---
+    roll5eStatsBtn.addEventListener('click', () => {
+        const stats = [];
+        for (let i = 0; i < 6; i++) {
+            stats.push(roll4d6DropLowest());
+        }
+        e5StatsResultsDiv.innerHTML = `
+            <p class="font-bold text-lg mb-2">Your New Stats:</p>
+            <div class="grid grid-cols-2 gap-2 text-base">
+                <p><strong>Strength:</strong> ${stats[0]}</p>
+                <p><strong>Dexterity:</strong> ${stats[1]}</p>
+                <p><strong>Constitution:</strong> ${stats[2]}</p>
+                <p><strong>Intelligence:</strong> ${stats[3]}</p>
+                <p><strong>Wisdom:</strong> ${stats[4]}</p>
+                <p><strong>Charisma:</strong> ${stats[5]}</p>
+            </div>
+        `;
+    });
+
+    function roll4d6DropLowest() {
+        let rolls = [];
+        for (let i = 0; i < 4; i++) {
+            rolls.push(Math.floor(Math.random() * 6) + 1);
+        }
+        rolls.sort((a, b) => a - b);
+        return rolls[1] + rolls[2] + rolls[3];
+    }
+
+    // --- Event Listeners for Sorting ---
+    msSortBySelect.addEventListener('change', (e) => {
+        currentMsSortOrder = e.target.value;
+        populateMsGrid();
+    });
+
+    pcSortBySelect.addEventListener('change', (e) => {
+        currentPcSortOrder = e.target.value;
+        populatePcGrid();
+    });
+
+    // --- HTML Export Modal Button Listeners ---
+    copyHtmlBtn.addEventListener('click', () => {
+        exportedHtmlCode.select();
+        document.execCommand('copy');
+        const originalText = copyHtmlBtn.textContent;
+        copyHtmlBtn.textContent = 'Copied!';
+        setTimeout(() => {
+            copyHtmlBtn.textContent = originalText;
+        }, 1500);
+    });
+
+    closeHtmlModalBtn.addEventListener('click', () => {
+        hideHtmlExportModal();
+    });
+
+    // --- Initial Load ---
+    updateSpoilerStatusDisplay(); // Set initial status of spoiler toggle
+    populateMsGrid();
+    populatePcGrid();
+    populateMobileSuitSelect(newPcEquippedMsSelect);
+    switchTab('ms-database'); // Start on the MS Database tab
+});
+</script>
+
+</body>
+</html>
