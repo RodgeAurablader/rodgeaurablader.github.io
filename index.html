@@ -1053,40 +1053,16 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const defaultPlayerCharacters = {
-        'silas': {
-            name: "Silas 'Ghost' Vance",
-            class: "Ace Pilot",
-            level: 5,
-            hp: 45,
-            img: "https://placehold.co/200x200/4CAF50/FFFFFF?text=Silas",
-            equippedMobileSuitId: "junker",
-            stats: { STR: 12, DEX: 18, CON: 14, INT: 10, WIS: 14, CHA: 8 },
-            equipment: ["Beam Pistol", "Combat Knife", "Pilot's Goggles", "Comms Unit"],
-            abilities: ["Quick Reflexes", "Expert Maneuvers"],
-            isCustom: false
-        },
         'dina': {
-            name: "Dina 'Wrench' Khan",
+            name: "Dina Eisenfaust",
             class: "Mechanic",
-            level: 4,
-            hp: 38,
+            level: 1,
+            hp: 16,
             img: "https://placehold.co/200x200/2196F3/FFFFFF?text=Dina",
             equippedMobileSuitId: null,
-            stats: { STR: 10, DEX: 12, CON: 16, INT: 18, WIS: 12, CHA: 10 },
+            stats: { STR: 10, DEX: 16, CON: 12, INT: 18, WIS: 15, CHA: 13 },
             equipment: ["Toolkit (Masterwork)", "Welding Torch", "Datapad", "Utility Belt"],
             abilities: ["Field Repair", "Jury-Rig"],
-            isCustom: false
-        },
-        'red-eye': {
-            name: "Red-Eye",
-            class: "Ace Pilot",
-            level: 7,
-            hp: 60,
-            img: "https://placehold.co/200x200/FF0000/FFFFFF?text=Red-Eye",
-            equippedMobileSuitId: "zato",
-            stats: { STR: 14, DEX: 20, CON: 16, INT: 12, WIS: 16, CHA: 14 },
-            equipment: ["Custom Beam Rifle", "Energy Katana", "Advanced Pilot Helmet"],
-            abilities: ["Legendary Pilot", "Uncanny Dodge"],
             isCustom: false
         }
     };
@@ -1142,7 +1118,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentMsSortOrder = 'name-asc';
     let currentPcSortOrder = 'name-asc';
     let isSpoilerEnabled = localStorage.getItem('spoilerEnabled') !== 'false';
-    let hideTheosFactions = localStorage.getItem('hideTheosFactions') !== 'false'; // Default to true
+    let hideTheosFactions = localStorage.getItem('hideTheosFactions') !== 'true'; // Default to true
     let isDarkMode = localStorage.getItem('darkMode') === 'true'; // Load dark mode preference
 
     // --- DOM Elements ---
