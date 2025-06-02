@@ -940,6 +940,25 @@ document.addEventListener('DOMContentLoaded', () => {
             faction: "Junker Guilds",
             isCustom: false
         },
+        'anvil': {
+            name: "JNK-MS02 Anvil",
+            description: "The rough and tumble mobile suit used by the leader of the Iron Grasp Guild, wielding a giant sledgehammer and cannons on each shoulder. this mobile suit will pack a punch, if it doesn't knock you out.",
+            img: "https://media.discordapp.net/attachments/440227326236819466/1378900772351381534/Anvil.webp?ex=683e48ea&is=683cf76a&hm=1965c0fa92afcaa8118296d5222f74af540731f13588ddce9ff26f3eeb20d17f&=&format=webp",
+            stats: { STR: 16, DEX: 14, CON: 20 },
+            ac: 17, acDescription: "Heavy Plating", hp: 100, hpFormula: "40 Overguard", speed: "7sq",
+            immunities: "poison, psychic", conditionImmunities: "charmed, exhaustion, frightened, paralyzed, petrified, poisoned, unconscious",
+            senses: "passive Perception 12 (pilot's Perception), Darkvision 120 ft.", languages: "understands languages pilot knows, but can't speak (via comms)",
+            actions: [
+                { name: "Slegehammer", description: " 1sq., 4d12 Bludgeioning Damage" },
+                { name: "Precision Salvaged Rifle (Ranged Weapon Attack)", description: "range 12sq. (long barrel). Hit: 32 (4d12 + 1d4) piercing damage." }
+            ],
+            specialAbilities: [
+                { name: "Commanding Force", description: "This unit gives it's pilot an extra point in charisma." },
+                { name: "Heavy Frame", description: "This unit gains an extra upgrade slot due to it's heavy frame." }
+            ],
+            faction: "iron-grasp-guild",
+            isCustom: false
+        },
         'aptos': {
             name: "THS-011𝛼 Aptos",
             description: "The Aptos, designated THS-011𝛼, is a formidable and highly advanced Mobile Suit, believed to be a pinnacle of Theos's combat optimization. This unit boasts exceptional strength, agility, and durability, making it a versatile threat on the battlefield. Its advanced Malleable Armor Dampener allows it to adapt defensively to incoming damage, while its sheer power is evident in its ability to unleash devastating Tremor Punches that can knock opponents prone. Equipped with a unique Stutzer Unit, the Aptos can engage targets at range, restraining them with wire-guided manipulators, showcasing its tactical superiority. Designed for both direct confrontation and strategic control, the Aptos represents a significant leap in Mobile Suit technology, capable of understanding machine code and operating with a high degree of autonomy.",
@@ -1058,7 +1077,7 @@ document.addEventListener('DOMContentLoaded', () => {
             class: "Mechanic",
             level: 1,
             hp: 16,
-            img: "https://placehold.co/200x200/2196F3/FFFFFF?text=Dina",
+            img: "https://media.discordapp.net/attachments/440227326236819466/1378855761840439336/Pilot_Dina.jpg?ex=683e1eff&is=683ccd7f&hm=4f3f8ec310c623df3a2cb6eec39f67ed46bae6aa4766a7edb83184031bb70561&=&format=webp&width=864&height=864",
             equippedMobileSuitId: null,
             stats: { STR: 10, DEX: 16, CON: 12, INT: 18, WIS: 15, CHA: 13 },
             equipment: ["Toolkit (Masterwork)", "Welding Torch", "Datapad", "Utility Belt"],
@@ -1066,16 +1085,46 @@ document.addEventListener('DOMContentLoaded', () => {
             isCustom: false
         }
     };
-
+// Find Default Faction Setup
     const defaultFactions = {
         'theos': {
             id: 'theos',
             name: "Theos",
             isCustom: false,
             namingScheme: {
-                prefixes: ['TH', 'UNIT', 'PROT', 'SYS'],
+                prefixes: ['THS', 'UNIT', 'PROT', 'SYS'],
                 types: ['ALPHA', 'BETA', 'OMEGA', 'DELTA', 'SIGMA'],
-                suffixes: ['A', 'B', 'X', 'Z', '']
+                suffixes: ['α', 'β', 'γ', '	δ', '']
+            }
+        },
+        'scrap-hounds': {
+            id: 'scrap-hounds',
+            name: "Scrap Hounds",
+            isCustom: false,
+            namingScheme: {
+                prefixes: ['SH', 'HOUND', 'MAUL', 'FANG'],
+                types: ['DOG', 'WOLF', 'PACK', 'ALPHA'],
+                suffixes: ['1', '2', 'A', 'B', '']
+            }
+        },
+        'iron-grasp-guild': {
+            id: 'iron-grasp-guild',
+            name: "Iron Grasp Guild",
+            isCustom: false,
+            namingScheme: {
+                prefixes: ['IG', 'GRASP', 'CLAW', 'VICE'],
+                types: ['HEAVY', 'FORT', 'GUARD', 'IRON'],
+                suffixes: ['X', 'Y', 'Z', '']
+            }
+        },
+        'crazy-edds': {
+            id: 'crazy-edds',
+            name: "Crazy Edd's",
+            isCustom: false,
+            namingScheme: {
+                prefixes: ['CE', 'EDD', 'ZANY', 'WHIZ'],
+                types: ['PROT', 'EXP', 'FUN', 'MAD'],
+                suffixes: ['V1', 'V2', 'V3', '']
             }
         },
         'junker-guilds': {
