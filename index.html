@@ -653,6 +653,17 @@
                 </article>
 
                 <article class="bg-card-custom p-6 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-semibold text-accent-custom mb-3">Faction Mobile Suit Examples</h3>
+                    <p class="text-main-custom mb-4">Generate and view example Mobile Suits for each faction.</p>
+                    <button id="generate-faction-ms-images-btn" class="px-6 py-3 bg-accent-custom text-white rounded-md hover:opacity-90 transition-colors duration-200 flex items-center justify-center">
+                        Generate Faction MS Images
+                        <div id="faction-ms-images-loading" class="loading-spinner ml-3 hidden"></div>
+                    </button>
+                    <div id="faction-ms-images-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                        </div>
+                </article>
+
+                <article class="bg-card-custom p-6 rounded-xl shadow-lg">
                     <h3 class="text-2xl font-semibold text-accent-custom mb-3">5e Character Stat Roller 🎲</h3>
                     <p class="text-main-custom mb-4">Generates 6 ability scores using the 4d6 drop the lowest method.</p>
                     <button id="roll-5e-stats-btn" class="px-6 py-3 bg-accent-custom text-white rounded-md hover:opacity-90 transition-colors duration-200 flex items-center justify-center">
@@ -1067,6 +1078,123 @@ document.addEventListener('DOMContentLoaded', () => {
                 { name: "Heavy Frame", description: "This unit gains an extra upgrade slot due to its heavy frame."}
             ],
             faction: "Junker Guilds",
+            isCustom: false
+        },
+        // NEW MOBILE SUITS ADDED BELOW
+        'sh-fenrir-01': {
+            name: "SH-FENRIR-01 Fenris",
+            description: "A quadrupedal Mobile Suit, built by the Scrap Hounds, resembling a massive, armored wolf. Its design emphasizes speed and pack tactics, often seen leading the charge in hit-and-run raids. Mismatched plating gives it a rugged, intimidating appearance.",
+            img: "http://googleusercontent.com/image_generation_content/6",
+            stats: { STR: 18, DEX: 20, CON: 16 },
+            ac: 17, acDescription: "Reinforced Scavenged Plating",
+            hp: 140, hpFormula: "60 Overguard",
+            speed: "8sq. (Quadrupedal)",
+            immunities: "none",
+            conditionImmunities: "charmed, exhaustion, frightened, paralyzed, petrified, poisoned, unconscious",
+            senses: "passive Perception 14 (pilot's Perception), Scent 60 ft.",
+            languages: "understands pilot knows, growls and barks via comms",
+            actions: [
+                { name: "Bite (Melee Weapon Attack)", description: "1sq., 3d8 piercing damage. Target must make a DC 14 Strength saving throw or be knocked prone." },
+                { name: "Mounted Autocannon (Ranged Weapon Attack)", description: "8sq., 3d6 piercing damage." }
+            ],
+            specialAbilities: [
+                { name: "Pack Hunter", description: "If an enemy Mobile Suit is within 1sq. of an allied Mobile Suit, the Fenris has advantage on attack rolls against that enemy." },
+                { name: "Swift Retreat (Bonus Action)", description: "The Fenris can use its bonus action to disengage or dash." }
+            ],
+            faction: "Scrap Hounds",
+            isCustom: false
+        },
+        'ig-grasp-x-golem': {
+            name: "IG-GRASP-X Golem",
+            description: "A heavily armored, bipedal Mobile Suit, the Golem is the Iron Grasp Guild's answer to frontline defense and heavy assault. Its signature feature is a massive, articulated claw designed for crushing and grappling. Built with thick, salvaged industrial plating, it prioritizes endurance and brute force.",
+            img: "http://googleusercontent.com/image_generation_content/7",
+            stats: { STR: 22, DEX: 8, CON: 20 },
+            ac: 19, acDescription: "Industrial Composite Armor",
+            hp: 180, hpFormula: "80 Overguard",
+            speed: "4sq.",
+            immunities: "bludgeoning",
+            conditionImmunities: "charmed, exhaustion, frightened, paralyzed, petrified, poisoned, unconscious, grappled, restrained",
+            senses: "passive Perception 10 (pilot's Perception)",
+            languages: "understands pilot knows",
+            actions: [
+                { name: "Crushing Claw (Melee Weapon Attack)", description: "1sq., 4d10 bludgeoning damage. If the target is a Mobile Suit, it must make a DC 16 Strength saving throw or be grappled (escape DC 16)." },
+                { name: "Shoulder-Mounted Shotgun (Ranged Weapon Attack)", description: "3sq. Cone, 3d8 piercing damage. Ignores half cover." }
+            ],
+            specialAbilities: [
+                { name: "Iron Grip", description: "The Golem has advantage on Strength checks to maintain a grapple." },
+                { name: "Immovable Stance", description: "The Golem has advantage on saving throws against effects that would push it or knock it prone." }
+            ],
+            faction: "Iron Grasp Guild",
+            isCustom: false
+        },
+        'ce-zany-v1-sparkplug': {
+            name: "CE-ZANY-V1 Sparkplug",
+            description: "A chaotic, vibrant Mobile Suit, the Sparkplug embodies Crazy Edd's philosophy of \"anything goes.\" It's a collection of brightly colored, mismatched parts, often emitting sparks and strange energy signatures. Unpredictable but surprisingly effective, it's a mobile light show on the battlefield.",
+            img: "http://googleusercontent.com/image_generation_content/8",
+            stats: { STR: 14, DEX: 18, CON: 12 },
+            ac: 16, acDescription: "Scrappy Reactive Plating",
+            hp: 110, hpFormula: "30 Overguard",
+            speed: "7sq.",
+            immunities: "electric",
+            conditionImmunities: "charmed, exhaustion, frightened, paralyzed, petrified, poisoned, unconscious",
+            senses: "passive Perception 12 (pilot's Perception), Blindsight 30 ft. (via erratic sensors)",
+            languages: "understands pilot knows, communicates via static bursts",
+            actions: [
+                { name: "Arcing Punch (Melee Weapon Attack)", description: "1sq., 2d8 bludgeoning damage + 1d6 lightning damage." },
+                { name: "Jury-Rigged Energy Blast (Ranged Energy Attack)", description: "6sq., 3d10 force damage. On a hit, roll a d4. On a 1, the Sparkplug takes 1d4 force damage." }
+            ],
+            specialAbilities: [
+                { name: "Erratic Movement", description: "As a bonus action, the Sparkplug can move up to half its speed without provoking opportunity attacks. This movement can be in any direction, including vertically if applicable." },
+                { name: "Feedback Loop (Recharge 6)", description: "When the Sparkplug takes damage, it can use its reaction to deal 2d8 electric damage to one creature within 1sq. of it." }
+            ],
+            faction: "Crazy Edd's",
+            isCustom: false
+        },
+        'jnk-mk-03-scrapper': {
+            name: "JNK-MK-03 Scrapper",
+            description: "The backbone of many Junker Guild patrols, the Scrapper is a no-frills, mass-produced Mobile Suit. It's designed for reliability and ease of maintenance, often appearing in squadrons. Its rusty, battle-scarred exterior tells a story of countless skirmishes and desperate salvage operations.",
+            img: "http://googleusercontent.com/image_generation_content/9",
+            stats: { STR: 16, DEX: 12, CON: 18 },
+            ac: 16, acDescription: "Standard Junker Plating",
+            hp: 130, hpFormula: "50 Overguard",
+            speed: "5sq.",
+            immunities: "none",
+            conditionImmunities: "charmed, exhaustion, frightened, paralyzed, petrified, poisoned, unconscious",
+            senses: "passive Perception 10 (pilot's Perception)",
+            languages: "understands pilot knows",
+            actions: [
+                { name: "Salvaged Axe (Melee Weapon Attack)", description: "1sq., 3d6 slashing damage." },
+                { name: "Scrap Cannon (Ranged Weapon Attack)", description: "7sq., 2d8 piercing damage. Fires a volley of compressed scrap." }
+            ],
+            specialAbilities: [
+                { name: "Modular Design", description: "The Scrapper has one additional upgrade slot for standard equipment." },
+                { name: "Formation Fighter", description: "When within 1sq. of an allied Mobile Suit, the Scrapper gains +1 to its AC." }
+            ],
+            faction: "Junker Guilds",
+            isCustom: false
+        },
+        'ths-unit-007-sentinel': {
+            name: "THS-UNIT-007 Sentinel",
+            description: "A pristine, unpiloted Mobile Suit, the Sentinel is a product of Theos's advanced design principles. Its sleek, minimalist form belies its immense power and precision. Often deployed as a silent guardian or a swift response unit, it operates with chilling efficiency.",
+            img: "http://googleusercontent.com/image_generation_content/10",
+            stats: { STR: 20, DEX: 22, CON: 18 },
+            ac: 20, acDescription: "Theos Adaptive Plating",
+            hp: 160, hpFormula: "100 Overguard",
+            speed: "9sq. (Hover)",
+            immunities: "poison, psychic, force, lightning",
+            conditionImmunities: "charmed, exhaustion, frightened, paralyzed, petrified, poisoned, unconscious, grappled, restrained",
+            senses: "passive Perception 16, Truesight 120 ft.",
+            languages: "--",
+            actions: [
+                { name: "Perfected Strike (Melee Weapon Attack)", description: "1sq., 4d8 force damage. Attacks with uncanny accuracy." },
+                { name: "Precision Beam Rifle (Ranged Energy Attack)", description: "15sq., 5d10 force damage. Ignores cover." }
+            ],
+            specialAbilities: [
+                { name: "Autonomous Protocol", description: "This Mobile Suit operates autonomously. It is immune to effects that target pilots or require a pilot." },
+                { name: "System Scan (Bonus Action)", description: "The Sentinel can use its bonus action to scan one creature within 60 feet. The next attack roll against that creature has advantage." },
+                { name: "Adaptive Defense", description: "When the Sentinel takes damage, it can use its reaction to gain resistance to that damage type until the start of its next turn." }
+            ],
+            faction: "Theos",
             isCustom: false
         }
     };
